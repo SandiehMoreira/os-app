@@ -1,0 +1,12 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // v1: qualquer usuário autenticado (técnico/atendente) tem acesso total.
+    // Preparado para multi-loja: quando existir o papel de loja, trocar por
+    // checagem de storeId no token/custom claims.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
