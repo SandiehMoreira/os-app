@@ -62,10 +62,12 @@ export const CHECKLIST_ITEMS = [
 
 export type ChecklistItemKey = (typeof CHECKLIST_ITEMS)[number]["key"];
 
+type ModelFlags = Pick<Model, "hasFaceId" | "hasTouchId" | "hasHomeButton">;
+
 export const CHECKLIST_ITEMS_CONDICIONAIS = [
-  { key: "face_id", label: "Face ID", condicao: (m: Model) => m.hasFaceId },
-  { key: "touch_id", label: "Touch ID", condicao: (m: Model) => m.hasTouchId },
-  { key: "botao_home", label: "Botão home", condicao: (m: Model) => m.hasHomeButton },
+  { key: "face_id", label: "Face ID", condicao: (m: ModelFlags) => m.hasFaceId },
+  { key: "touch_id", label: "Touch ID", condicao: (m: ModelFlags) => m.hasTouchId },
+  { key: "botao_home", label: "Botão home", condicao: (m: ModelFlags) => m.hasHomeButton },
 ] as const;
 
 export type ChecklistItemCondicionalKey =
