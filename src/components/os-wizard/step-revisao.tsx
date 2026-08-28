@@ -52,7 +52,7 @@ export function StepRevisao({ state, onBack }: StepProps) {
         checklist: state.testavel ? state.checklist : undefined,
         defeitosObservados: state.testavel ? state.defeitosObservados : undefined,
         observacoes: state.observacoes || undefined,
-        fotos: [],
+        fotos: state.fotos,
         senha: {
           temSenha: !!state.senhaTemSenha,
           tipo: state.senhaTemSenha ? state.senhaTipo : undefined,
@@ -138,6 +138,9 @@ export function StepRevisao({ state, onBack }: StepProps) {
           ) : (
             <p>Não testável: {state.motivoNaoTestavel}</p>
           )}
+          <p className="text-black/60 dark:text-white/60">
+            {state.fotos.length} foto{state.fotos.length === 1 ? "" : "s"} do aparelho
+          </p>
         </ResumoSecao>
 
         <ResumoSecao titulo="Senha">

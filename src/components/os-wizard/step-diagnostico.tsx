@@ -6,6 +6,7 @@ import {
   type ChecklistCompletoKey,
   type ChecklistStatus,
 } from "@/types/os";
+import { FotosAparelho } from "./fotos-aparelho";
 import type { StepProps } from "./types";
 import { WizardFooter } from "./wizard-footer";
 
@@ -128,9 +129,7 @@ export function StepDiagnostico({ state, update, onNext, onBack }: StepProps) {
           />
         </div>
 
-        <p className="text-xs text-black/50 dark:text-white/50">
-          Fotos do aparelho: em breve (aguardando configuração do Cloudinary).
-        </p>
+        <FotosAparelho fotos={state.fotos} onChange={(fotos) => update({ fotos })} />
       </div>
       <WizardFooter onBack={onBack} onNext={onNext} />
     </div>

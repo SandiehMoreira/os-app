@@ -1,4 +1,4 @@
-import type { Acessorio, Checklist, DocumentoTipo, SenhaTipo } from "@/types/os";
+import type { Acessorio, Checklist, DocumentoTipo, Foto, SenhaTipo } from "@/types/os";
 
 export interface WizardState {
   customerId?: string;
@@ -27,6 +27,7 @@ export interface WizardState {
   checklist: Checklist;
   defeitosObservados: string;
   observacoes: string;
+  fotos: Foto[];
 
   senhaTemSenha: boolean | null;
   senhaTipo?: SenhaTipo;
@@ -77,6 +78,7 @@ export const initialWizardState: WizardState = {
   checklist: {},
   defeitosObservados: "",
   observacoes: "",
+  fotos: [],
 
   senhaTemSenha: null,
   senhaTipo: undefined,
