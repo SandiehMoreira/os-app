@@ -1,7 +1,6 @@
 import { getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
-import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -21,4 +20,3 @@ export const auth = getAuth(app);
 export const db = alreadyInitialized
   ? getFirestore(app)
   : initializeFirestore(app, { ignoreUndefinedProperties: true });
-export const functions = getFunctions(app, "southamerica-east1");
