@@ -1,6 +1,7 @@
 "use client";
 
 import { signInWithEmailAndPassword } from "firebase/auth";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { useAuth } from "@/lib/auth-context";
@@ -84,6 +85,21 @@ export default function LoginPage() {
         >
           {submitting ? "Entrando..." : "Entrar"}
         </button>
+
+        <div className="flex justify-between text-sm">
+          <Link
+            href="/signup"
+            className="text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white"
+          >
+            Criar conta
+          </Link>
+          <Link
+            href="/recuperar-senha"
+            className="text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white"
+          >
+            Esqueci minha senha
+          </Link>
+        </div>
       </form>
     </div>
   );
