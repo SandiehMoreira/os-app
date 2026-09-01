@@ -30,6 +30,21 @@ export interface Brand {
   nome: string;
 }
 
+export const CORES_APARELHO = [
+  "Preto",
+  "Branco",
+  "Prata",
+  "Cinza",
+  "Grafite",
+  "Dourado",
+  "Azul",
+  "Verde",
+  "Vermelho",
+  "Roxo",
+  "Rosa",
+  "Titânio",
+] as const;
+
 export const ACESSORIOS = [
   "Carregador",
   "Cabo",
