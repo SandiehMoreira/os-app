@@ -1,6 +1,7 @@
 "use client";
 
 import { signOut } from "firebase/auth";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
@@ -40,12 +41,20 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
             Voltar
           </button>
         ) : (
-          <button
-            onClick={() => signOut(auth)}
-            className="text-sm text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white"
-          >
-            Sair
-          </button>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/configuracoes"
+              className="text-sm text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white"
+            >
+              Configurações
+            </Link>
+            <button
+              onClick={() => signOut(auth)}
+              className="text-sm text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white"
+            >
+              Sair
+            </button>
+          </div>
         )}
       </header>
       <main className="flex flex-1 flex-col">{children}</main>

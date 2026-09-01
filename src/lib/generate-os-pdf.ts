@@ -1,16 +1,11 @@
 import { jsPDF } from "jspdf";
+import { getStoreSettings } from "@/lib/firestore-service";
 import {
   CHECKLIST_ITEMS,
   CHECKLIST_ITEMS_CONDICIONAIS,
   OS_STATUS_LABELS,
   type ServiceOrder,
 } from "@/types/os";
-
-const TERMO_RESPONSABILIDADE =
-  "A assistência não se responsabiliza por dados armazenados no aparelho, nem por riscos " +
-  "adicionais em aparelhos com sinais de oxidação/umidade ou reparo anterior por terceiros. " +
-  "Orçamento sujeito a ajuste após diagnóstico completo. Aparelhos não retirados em até 90 " +
-  "dias após o aviso de conclusão poderão ser descartados.";
 
 const PAGE_WIDTH = 210;
 const MARGIN = 15;
@@ -50,7 +45,13 @@ async function loadImageAsDataUrl(
   }
 }
 
+function imageFormatFromDataUrl(dataUrl: string): string {
+  const match = dataUrl.match(/^data:image\/(\w+);/);
+  return (match?.[1] ?? "jpeg").toUpperCase();
+}
+
 export async function generateOsPdf(order: ServiceOrder): Promise<jsPDF> {
+  const settings = await getStoreSettings();
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = MARGIN;
 
@@ -79,10 +80,21 @@ export async function generateOsPdf(order: ServiceOrder): Promise<jsPDF> {
   }
 
   // Cabeçalho
+  let headerX = MARGIN;
+  if (settings.logoUrl) {
+    const logo = await loadImageAsDataUrl(settings.logoUrl);
+    if (logo) {
+      const logoHeight = 14;
+      const logoWidth = (logo.width / logo.height) * logoHeight;
+      doc.addImage(logo.dataUrl, imageFormatFromDataUrl(logo.dataUrl), MARGIN, y - 5, logoWidth, logoHeight);
+      headerX = MARGIN + logoWidth + 4;
+    }
+  }
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("Ordem de Serviço", MARGIN, y);
-  doc.text(`#${String(order.number).padStart(4, "0")}`, PAGE_WIDTH - MARGIN, y, {
+  doc.setFontSize(14);
+  doc.text(settings.nomeEmpresa, headerX, y);
+  doc.setFontSize(12);
+  doc.text(`OS #${String(order.number).padStart(4, "0")}`, PAGE_WIDTH - MARGIN, y, {
     align: "right",
   });
   y += 6;
@@ -125,7 +137,7 @@ export async function generateOsPdf(order: ServiceOrder): Promise<jsPDF> {
   const servicos = order.orcamento.servicos ?? [];
   ensureSpace(14 + servicos.length * 5);
   y += 3;
-  doc.setDrawColor(21, 93, 252);
+  doc.setDrawColor(0, 0, 0);
   doc.setLineWidth(0.4);
   doc.rect(MARGIN, y, CONTENT_WIDTH, 10 + servicos.length * 5.5 + 8);
   y += 6;
@@ -160,7 +172,7 @@ export async function generateOsPdf(order: ServiceOrder): Promise<jsPDF> {
 
   heading("Termo de responsabilidade");
   doc.setFontSize(8);
-  line(TERMO_RESPONSABILIDADE);
+  line(settings.termoResponsabilidade);
   doc.setFontSize(10);
 
   y += 8;
@@ -190,7 +202,7 @@ export async function generateOsPdf(order: ServiceOrder): Promise<jsPDF> {
       const height = image.height * ratio;
 
       ensureSpace(height + 6);
-      doc.addImage(image.dataUrl, "JPEG", MARGIN, y, width, height);
+      doc.addImage(image.dataUrl, imageFormatFromDataUrl(image.dataUrl), MARGIN, y, width, height);
       y += height + 6;
     }
   }

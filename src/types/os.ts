@@ -1,5 +1,18 @@
 export type DocumentoTipo = "CPF" | "RG";
 
+export const TERMO_RESPONSABILIDADE_PADRAO =
+  "A assistência não se responsabiliza por dados armazenados no aparelho, nem por riscos " +
+  "adicionais em aparelhos com sinais de oxidação/umidade ou reparo anterior por terceiros. " +
+  "Orçamento sujeito a ajuste após diagnóstico completo. Aparelhos não retirados em até 90 " +
+  "dias após o aviso de conclusão poderão ser descartados.";
+
+export interface StoreSettings {
+  nomeEmpresa: string;
+  logoUrl?: string;
+  termoResponsabilidade: string;
+  updatedAt: number;
+}
+
 export interface Customer {
   id: string;
   storeId: string;

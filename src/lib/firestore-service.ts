@@ -9,13 +9,21 @@ import {
   orderBy,
   query,
   runTransaction,
+  setDoc,
   where,
   writeBatch,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { STORE_ID } from "@/lib/constants";
 import { SEED_BRANDS } from "@/lib/seed-data";
-import type { Brand, Customer, Model, ServiceOrder } from "@/types/os";
+import {
+  TERMO_RESPONSABILIDADE_PADRAO,
+  type Brand,
+  type Customer,
+  type Model,
+  type ServiceOrder,
+  type StoreSettings,
+} from "@/types/os";
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, "");
@@ -136,4 +144,23 @@ export async function getRecentServiceOrders(count = 20): Promise<ServiceOrder[]
 export async function getServiceOrder(id: string): Promise<ServiceOrder | null> {
   const snap = await getDoc(doc(db, "serviceOrders", id));
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as ServiceOrder) : null;
+}
+
+const DEFAULT_STORE_SETTINGS: StoreSettings = {
+  nomeEmpresa: "OS Assistência Técnica",
+  termoResponsabilidade: TERMO_RESPONSABILIDADE_PADRAO,
+  updatedAt: 0,
+};
+
+export async function getStoreSettings(): Promise<StoreSettings> {
+  const snap = await getDoc(doc(db, "settings", STORE_ID));
+  return snap.exists() ? (snap.data() as StoreSettings) : DEFAULT_STORE_SETTINGS;
+}
+
+export async function updateStoreSettings(patch: Partial<StoreSettings>): Promise<void> {
+  await setDoc(
+    doc(db, "settings", STORE_ID),
+    { ...patch, updatedAt: Date.now() },
+    { merge: true },
+  );
 }
