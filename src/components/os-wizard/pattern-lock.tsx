@@ -2,21 +2,25 @@
 
 import { useRef, useState } from "react";
 
-const POSITIONS: [number, number][] = [
+export const PATTERN_POSITIONS: [number, number][] = [
   [0, 0], [1, 0], [2, 0],
   [0, 1], [1, 1], [2, 1],
   [0, 2], [1, 2], [2, 2],
 ];
 
-const SIZE = 240;
-const PAD = 40;
-const STEP = (SIZE - PAD * 2) / 2;
+export const PATTERN_SIZE = 240;
+const PATTERN_PAD = 40;
+const PATTERN_STEP = (PATTERN_SIZE - PATTERN_PAD * 2) / 2;
 const HIT_RADIUS = 26;
 
-function dotCenter(i: number) {
-  const [cx, cy] = POSITIONS[i];
-  return { x: PAD + cx * STEP, y: PAD + cy * STEP };
+export function patternDotCenter(i: number) {
+  const [cx, cy] = PATTERN_POSITIONS[i];
+  return { x: PATTERN_PAD + cx * PATTERN_STEP, y: PATTERN_PAD + cy * PATTERN_STEP };
 }
+
+const POSITIONS = PATTERN_POSITIONS;
+const SIZE = PATTERN_SIZE;
+const dotCenter = patternDotCenter;
 
 function nearestDot(x: number, y: number): number | null {
   for (let i = 0; i < 9; i++) {

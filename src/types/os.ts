@@ -121,7 +121,13 @@ export interface Device {
   acessorios: Acessorio[];
 }
 
+export interface ServicoOrcamento {
+  descricao: string;
+  valor: number;
+}
+
 export interface Orcamento {
+  servicos?: ServicoOrcamento[];
   valorOrcado?: number;
   valorAprovado?: number;
   aprovadoEm?: number;

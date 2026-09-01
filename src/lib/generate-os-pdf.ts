@@ -7,13 +7,10 @@ import {
 } from "@/types/os";
 
 const TERMO_RESPONSABILIDADE =
-  "Ao deixar o aparelho nesta assistência técnica, o cliente declara estar ciente de que: " +
-  "(1) a assistência não se responsabiliza por dados armazenados no aparelho, recomendando-se " +
-  "backup prévio; (2) aparelhos com sinais de oxidação, umidade ou reparo anterior por terceiros " +
-  "podem apresentar risco adicional durante o diagnóstico e reparo; (3) o orçamento é uma " +
-  "estimativa e pode ser ajustado após diagnóstico completo; (4) aparelhos consertados e não " +
-  "retirados em até 90 dias após o aviso de conclusão poderão ser descartados, sem direito a " +
-  "indenização.";
+  "A assistência não se responsabiliza por dados armazenados no aparelho, nem por riscos " +
+  "adicionais em aparelhos com sinais de oxidação/umidade ou reparo anterior por terceiros. " +
+  "Orçamento sujeito a ajuste após diagnóstico completo. Aparelhos não retirados em até 90 " +
+  "dias após o aviso de conclusão poderão ser descartados.";
 
 const PAGE_WIDTH = 210;
 const MARGIN = 15;
@@ -85,43 +82,34 @@ export async function generateOsPdf(order: ServiceOrder): Promise<jsPDF> {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.text("Ordem de Serviço", MARGIN, y);
-  doc.setFontSize(16);
   doc.text(`#${String(order.number).padStart(4, "0")}`, PAGE_WIDTH - MARGIN, y, {
     align: "right",
   });
-  y += 8;
+  y += 6;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  line(`Status: ${OS_STATUS_LABELS[order.status]}`);
-  line(`Data de entrada: ${formatDate(order.dataEntrada)}`);
-  line(`Prazo estimado de entrega: ${formatDate(order.prazoEntrega)}`);
-  line(`Técnico responsável: ${order.tecnicoResponsavel.nome}`);
-  y += 2;
-
-  heading("Cliente");
-  line(order.customerSnapshot.nome);
-  line(order.customerSnapshot.telefone);
-
-  heading("Aparelho");
-  line(`${order.device.brandName} ${order.device.modelName}`);
+  doc.setFontSize(9);
   line(
-    `Cor: ${order.device.cor || "-"} · Capacidade: ${order.device.capacidade || "-"}${order.device.imei ? ` · IMEI: ${order.device.imei}` : ""}`,
+    `${OS_STATUS_LABELS[order.status]} · Entrada: ${formatDate(order.dataEntrada)} · Prazo: ${formatDate(order.prazoEntrega)}`,
   );
+  y += 1;
+
+  heading("Cliente / Aparelho");
+  line(`${order.customerSnapshot.nome} · ${order.customerSnapshot.telefone}`);
   line(
-    `Acessórios: ${order.device.acessorios.length > 0 ? order.device.acessorios.join(", ") : "Nenhum"}`,
+    `${order.device.brandName} ${order.device.modelName} · ${order.device.cor || "-"} · ${order.device.capacidade || "-"}${order.device.imei ? ` · IMEI: ${order.device.imei}` : ""}`,
   );
 
   heading("Queixa do cliente");
   line(order.queixaCliente || "-");
 
   if (order.testavel) {
-    heading("Checklist técnico");
-    for (const [key, status] of Object.entries(order.checklist ?? {})) {
-      line(`${CHECKLIST_LABELS[key] ?? key}: ${status === "ok" ? "OK" : "Não OK"}`);
-    }
-    if (order.defeitosObservados) {
-      heading("Defeitos observados");
-      line(order.defeitosObservados);
+    const naoOk = Object.entries(order.checklist ?? {})
+      .filter(([, status]) => status === "nao_ok")
+      .map(([key]) => CHECKLIST_LABELS[key] ?? key);
+    if (naoOk.length > 0 || order.defeitosObservados) {
+      heading("Defeitos identificados");
+      if (naoOk.length > 0) line(naoOk.join(", "));
+      if (order.defeitosObservados) line(order.defeitosObservados);
     }
   } else {
     heading("Aparelho não testável na entrada");
@@ -133,21 +121,50 @@ export async function generateOsPdf(order: ServiceOrder): Promise<jsPDF> {
     line(order.observacoes);
   }
 
-  heading("Senha do aparelho");
-  line(order.senha.temSenha ? "Cliente deixou a senha registrada internamente." : "Não informada.");
-
-  heading("Orçamento");
-  line(
-    order.orcamento.valorOrcado != null
-      ? `Valor estimado: R$ ${order.orcamento.valorOrcado.toFixed(2)}`
-      : "A definir após diagnóstico.",
+  // Serviços e valor — seção em destaque
+  const servicos = order.orcamento.servicos ?? [];
+  ensureSpace(14 + servicos.length * 5);
+  y += 3;
+  doc.setDrawColor(21, 93, 252);
+  doc.setLineWidth(0.4);
+  doc.rect(MARGIN, y, CONTENT_WIDTH, 10 + servicos.length * 5.5 + 8);
+  y += 6;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Serviço a realizar / Valor", MARGIN + 3, y);
+  y += 6;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  if (servicos.length === 0) {
+    doc.text("A definir após diagnóstico.", MARGIN + 3, y);
+    y += 5.5;
+  } else {
+    for (const s of servicos) {
+      doc.text(s.descricao, MARGIN + 3, y);
+      doc.text(`R$ ${s.valor.toFixed(2)}`, PAGE_WIDTH - MARGIN - 3, y, { align: "right" });
+      y += 5.5;
+    }
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Total", MARGIN + 3, y + 2);
+  doc.text(
+    `R$ ${(order.orcamento.valorOrcado ?? 0).toFixed(2)}`,
+    PAGE_WIDTH - MARGIN - 3,
+    y + 2,
+    { align: "right" },
   );
+  y += 10;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
 
   heading("Termo de responsabilidade");
+  doc.setFontSize(8);
   line(TERMO_RESPONSABILIDADE);
+  doc.setFontSize(10);
 
-  y += 10;
-  ensureSpace(20);
+  y += 8;
+  ensureSpace(16);
   doc.line(MARGIN, y, MARGIN + 80, y);
   y += 4;
   doc.setFontSize(9);

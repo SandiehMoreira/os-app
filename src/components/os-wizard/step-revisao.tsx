@@ -64,9 +64,18 @@ export function StepRevisao({ state, onBack }: StepProps) {
           padrao:
             state.senhaTemSenha && state.senhaTipo === "padrao" ? state.senhaPadrao : undefined,
         },
-        orcamento: {
-          valorOrcado: state.valorOrcado ? Number(state.valorOrcado) : undefined,
-        },
+        orcamento: (() => {
+          const servicos = state.servicos
+            .filter((s) => s.descricao.trim() && s.valor)
+            .map((s) => ({ descricao: s.descricao.trim(), valor: Number(s.valor) || 0 }));
+          return {
+            servicos: servicos.length > 0 ? servicos : undefined,
+            valorOrcado:
+              servicos.length > 0
+                ? servicos.reduce((sum, s) => sum + s.valor, 0)
+                : undefined,
+          };
+        })(),
         tecnicoResponsavel: {
           uid: user.uid,
           nome: user.displayName || user.email || "Técnico",
@@ -157,8 +166,25 @@ export function StepRevisao({ state, onBack }: StepProps) {
           </p>
         </ResumoSecao>
 
-        <ResumoSecao titulo="Orçamento e prazo">
-          <p>{state.valorOrcado ? `R$ ${state.valorOrcado}` : "A definir"}</p>
+        <ResumoSecao titulo="Serviços e orçamento">
+          {state.servicos.length === 0 && <p>A definir após diagnóstico.</p>}
+          {state.servicos.map((s, i) => (
+            <p key={i} className="flex justify-between">
+              <span>{s.descricao || "-"}</span>
+              <span>R$ {(Number(s.valor) || 0).toFixed(2)}</span>
+            </p>
+          ))}
+          {state.servicos.length > 0 && (
+            <p className="flex justify-between font-semibold">
+              <span>Total</span>
+              <span>
+                R${" "}
+                {state.servicos
+                  .reduce((sum, s) => sum + (Number(s.valor) || 0), 0)
+                  .toFixed(2)}
+              </span>
+            </p>
+          )}
           <p className="text-black/60 dark:text-white/60">
             {state.prazoEntrega || "Sem prazo definido"}
           </p>

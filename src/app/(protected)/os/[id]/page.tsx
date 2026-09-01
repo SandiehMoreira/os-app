@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { OsActions } from "@/components/os-actions";
+import { PatternLockView } from "@/components/os-wizard/pattern-lock-view";
 import { getServiceOrder } from "@/lib/firestore-service";
 import {
   CHECKLIST_ITEMS,
@@ -121,17 +122,41 @@ export default function OsDetailPage() {
         </Secao>
       )}
 
+      <Secao titulo="Senha do aparelho">
+        {!order.senha.temSenha && <p>Não informada.</p>}
+        {order.senha.temSenha && order.senha.tipo === "numerica_alfanumerica" && (
+          <p className="text-lg font-mono font-semibold tracking-wide">
+            {order.senha.valor || "-"}
+          </p>
+        )}
+        {order.senha.temSenha && order.senha.tipo === "padrao" && order.senha.padrao && (
+          <div className="flex justify-center py-2">
+            <PatternLockView value={order.senha.padrao} />
+          </div>
+        )}
+      </Secao>
+
       <Secao titulo="Datas">
         <p>Entrada: {formatDate(order.dataEntrada)}</p>
         <p>Prazo estimado: {formatDate(order.prazoEntrega)}</p>
       </Secao>
 
-      <Secao titulo="Orçamento">
-        <p>
-          {order.orcamento.valorOrcado != null
-            ? `R$ ${order.orcamento.valorOrcado.toFixed(2)}`
-            : "A definir"}
-        </p>
+      <Secao titulo="Serviços e orçamento">
+        {(!order.orcamento.servicos || order.orcamento.servicos.length === 0) && (
+          <p>{order.orcamento.valorOrcado != null ? `R$ ${order.orcamento.valorOrcado.toFixed(2)}` : "A definir"}</p>
+        )}
+        {order.orcamento.servicos?.map((s, i) => (
+          <p key={i} className="flex justify-between">
+            <span>{s.descricao}</span>
+            <span>R$ {s.valor.toFixed(2)}</span>
+          </p>
+        ))}
+        {order.orcamento.servicos && order.orcamento.servicos.length > 0 && (
+          <p className="flex justify-between font-semibold">
+            <span>Total</span>
+            <span>R$ {order.orcamento.valorOrcado?.toFixed(2)}</span>
+          </p>
+        )}
       </Secao>
 
       <div className="pt-2">

@@ -34,7 +34,7 @@ export interface WizardState {
   senhaValor: string;
   senhaPadrao: number[];
 
-  valorOrcado: string;
+  servicos: { descricao: string; valor: string }[];
   prazoEntrega: string;
 }
 
@@ -85,7 +85,7 @@ export const initialWizardState: WizardState = {
   senhaValor: "",
   senhaPadrao: [],
 
-  valorOrcado: "",
+  servicos: [],
   prazoEntrega: "",
 };
 
