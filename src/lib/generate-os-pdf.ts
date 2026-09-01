@@ -182,31 +182,6 @@ export async function generateOsPdf(order: ServiceOrder): Promise<jsPDF> {
   doc.setFontSize(9);
   doc.text("Assinatura do cliente", MARGIN, y);
 
-  if (order.fotos.length > 0) {
-    doc.addPage();
-    y = MARGIN;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("Fotos do aparelho na entrada", MARGIN, y);
-    y += 8;
-    doc.setFont("helvetica", "normal");
-
-    for (const foto of order.fotos) {
-      const image = await loadImageAsDataUrl(foto.url);
-      if (!image) continue;
-
-      const maxWidth = CONTENT_WIDTH;
-      const maxHeight = 100;
-      const ratio = Math.min(maxWidth / image.width, maxHeight / image.height);
-      const width = image.width * ratio;
-      const height = image.height * ratio;
-
-      ensureSpace(height + 6);
-      doc.addImage(image.dataUrl, imageFormatFromDataUrl(image.dataUrl), MARGIN, y, width, height);
-      y += height + 6;
-    }
-  }
-
   return doc;
 }
 
