@@ -11,13 +11,16 @@ import type { StepProps } from "./types";
 export function StepRevisao({ state, onBack }: StepProps) {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [slowSave, setSlowSave] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedOrder, setSavedOrder] = useState<ServiceOrder | null>(null);
 
   async function handleSalvar() {
     if (!user) return;
     setSaving(true);
+    setSlowSave(false);
     setError(null);
+    const slowTimer = setTimeout(() => setSlowSave(true), 8000);
     try {
       let customerId = state.customerId;
       if (!customerId) {
@@ -89,7 +92,9 @@ export function StepRevisao({ state, onBack }: StepProps) {
     } catch {
       setError("Não foi possível salvar a OS. Tente novamente.");
     } finally {
+      clearTimeout(slowTimer);
       setSaving(false);
+      setSlowSave(false);
     }
   }
 
@@ -191,6 +196,12 @@ export function StepRevisao({ state, onBack }: StepProps) {
         </ResumoSecao>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
+        {slowSave && (
+          <p className="text-sm text-amber-600">
+            Isso está demorando mais que o normal — parece que sua internet está fraca. Não feche
+            o app: a OS salva assim que a conexão melhorar.
+          </p>
+        )}
       </div>
 
       <div className="flex gap-3 border-t border-black/10 p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+28px)] dark:border-white/10">
@@ -208,7 +219,7 @@ export function StepRevisao({ state, onBack }: StepProps) {
           disabled={saving}
           className="flex-[2] rounded-xl bg-blue-600 px-4 py-3 text-base font-medium text-white disabled:opacity-50"
         >
-          {saving ? "Salvando..." : "Gerar OS"}
+          {saving ? (slowSave ? "Ainda salvando..." : "Salvando...") : "Gerar OS"}
         </button>
       </div>
     </div>
