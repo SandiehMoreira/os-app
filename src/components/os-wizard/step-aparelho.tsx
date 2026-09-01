@@ -1,34 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ensureBrandsSeeded, getBrands, getModels } from "@/lib/firestore-service";
-import { ACESSORIOS, type Acessorio, type Brand, type Model } from "@/types/os";
+import { getCatalog, type Catalog } from "@/lib/firestore-service";
+import { ACESSORIOS, type Acessorio } from "@/types/os";
 import type { StepProps } from "./types";
 import { WizardFooter } from "./wizard-footer";
 
 export function StepAparelho({ state, update, onNext, onBack }: StepProps) {
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [modelsByBrand, setModelsByBrand] = useState<Record<string, Model[]>>({});
-  const [loadingBrands, setLoadingBrands] = useState(true);
+  const [catalog, setCatalog] = useState<Catalog | null>(null);
 
   useEffect(() => {
-    (async () => {
-      await ensureBrandsSeeded();
-      setBrands(await getBrands());
-      setLoadingBrands(false);
-    })();
+    getCatalog().then(setCatalog);
   }, []);
 
-  useEffect(() => {
-    if (!state.brandId || modelsByBrand[state.brandId]) return;
-    getModels(state.brandId).then((result) =>
-      setModelsByBrand((prev) => ({ ...prev, [state.brandId]: result })),
-    );
-  }, [state.brandId, modelsByBrand]);
-
-  const loadingModels = Boolean(state.brandId) && !modelsByBrand[state.brandId];
-
-  const models = state.brandId ? (modelsByBrand[state.brandId] ?? []) : [];
+  const loadingBrands = !catalog;
+  const brands = catalog?.brands ?? [];
+  const models = catalog && state.brandId ? (catalog.modelsByBrand[state.brandId] ?? []) : [];
 
   function handleBrandChange(brandId: string) {
     const brand = brands.find((b) => b.id === brandId);
@@ -97,10 +84,10 @@ export function StepAparelho({ state, update, onNext, onBack }: StepProps) {
           <select
             value={state.modelId}
             onChange={(e) => handleModelChange(e.target.value)}
-            disabled={!state.brandId || loadingModels}
+            disabled={!state.brandId}
             className="w-full rounded-lg border border-black/15 px-3 py-2.5 text-base outline-none focus:border-blue-600 dark:border-white/15"
           >
-            <option value="">{loadingModels ? "Carregando..." : "Selecione"}</option>
+            <option value="">Selecione</option>
             {models.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.nome}

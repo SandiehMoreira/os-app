@@ -1,8 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { getRecentServiceOrders } from "@/lib/firestore-service";
+import { OS_STATUS_LABELS, type ServiceOrder } from "@/types/os";
 
 export default function DashboardPage() {
+  const [recent, setRecent] = useState<ServiceOrder[] | null>(null);
+
+  useEffect(() => {
+    getRecentServiceOrders(5).then(setRecent);
+  }, []);
+
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4">
+    <div className="flex flex-1 flex-col gap-4 p-4">
       <Link
         href="/os/novo"
         className="rounded-xl bg-blue-600 px-4 py-3 text-center text-base font-medium text-white"
@@ -10,8 +21,43 @@ export default function DashboardPage() {
         + Nova OS
       </Link>
 
-      <div className="flex flex-1 items-center justify-center text-sm text-black/50 dark:text-white/50">
-        Lista de OS em breve.
+      <Link
+        href="/os"
+        className="rounded-xl border border-black/15 px-4 py-3 text-center text-base font-medium dark:border-white/15"
+      >
+        OS geradas
+      </Link>
+
+      <div className="mt-2 space-y-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-black/40 dark:text-white/40">
+          Últimas geradas
+        </p>
+
+        {recent === null && (
+          <p className="text-sm text-black/50 dark:text-white/50">Carregando...</p>
+        )}
+
+        {recent !== null && recent.length === 0 && (
+          <p className="text-sm text-black/50 dark:text-white/50">Nenhuma OS gerada ainda.</p>
+        )}
+
+        {recent?.map((order) => (
+          <div
+            key={order.id}
+            className="rounded-lg border border-black/10 p-3 text-sm dark:border-white/10"
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">#{String(order.number).padStart(4, "0")}</span>
+              <span className="rounded-full bg-blue-600/10 px-2 py-0.5 text-xs font-medium text-blue-600">
+                {OS_STATUS_LABELS[order.status]}
+              </span>
+            </div>
+            <p className="mt-1">{order.customerSnapshot.nome}</p>
+            <p className="text-black/60 dark:text-white/60">
+              {order.device.brandName} {order.device.modelName}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );

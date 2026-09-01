@@ -4,14 +4,16 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { createCustomer, createServiceOrder } from "@/lib/firestore-service";
-import { OS_STATUS_LABELS } from "@/types/os";
+import { generateOsPdf, getOsPdfFile } from "@/lib/generate-os-pdf";
+import { OS_STATUS_LABELS, type ServiceOrder } from "@/types/os";
 import type { StepProps } from "./types";
 
 export function StepRevisao({ state, onBack }: StepProps) {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [osNumber, setOsNumber] = useState<number | null>(null);
+  const [savedOrder, setSavedOrder] = useState<ServiceOrder | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
 
   async function handleSalvar() {
     if (!user) return;
@@ -75,7 +77,7 @@ export function StepRevisao({ state, onBack }: StepProps) {
         status: "recebido",
       });
 
-      setOsNumber(order.number);
+      setSavedOrder(order);
     } catch {
       setError("Não foi possível salvar a OS. Tente novamente.");
     } finally {
@@ -83,19 +85,76 @@ export function StepRevisao({ state, onBack }: StepProps) {
     }
   }
 
-  if (osNumber !== null) {
+  async function handleCompartilhar() {
+    if (!savedOrder) return;
+    setShareError(null);
+    const file = getOsPdfFile(savedOrder);
+    try {
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `OS #${String(savedOrder.number).padStart(4, "0")}`,
+        });
+        return;
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+    }
+    setShareError("Compartilhamento não disponível neste navegador. Use \"Baixar PDF\".");
+  }
+
+  function handleBaixar() {
+    if (!savedOrder) return;
+    generateOsPdf(savedOrder).save(`OS-${String(savedOrder.number).padStart(4, "0")}.pdf`);
+  }
+
+  function handleImprimir() {
+    if (!savedOrder) return;
+    const doc = generateOsPdf(savedOrder);
+    doc.autoPrint();
+    window.open(doc.output("bloburl"), "_blank");
+  }
+
+  if (savedOrder !== null) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
         <p className="text-sm text-black/60 dark:text-white/60">OS criada com sucesso</p>
         <p className="text-4xl font-semibold">
-          #{String(osNumber).padStart(4, "0")}
+          #{String(savedOrder.number).padStart(4, "0")}
         </p>
         <p className="text-sm text-black/50 dark:text-white/50">
-          Status: {OS_STATUS_LABELS.recebido} · Geração de PDF em breve.
+          Status: {OS_STATUS_LABELS.recebido}
         </p>
+
+        <div className="mt-4 flex w-full max-w-xs flex-col gap-2">
+          <button
+            type="button"
+            onClick={handleCompartilhar}
+            className="rounded-xl bg-blue-600 px-6 py-3 text-base font-medium text-white"
+          >
+            Compartilhar (WhatsApp etc.)
+          </button>
+          <button
+            type="button"
+            onClick={handleBaixar}
+            className="rounded-xl border border-black/15 px-6 py-3 text-base font-medium dark:border-white/15"
+          >
+            Baixar PDF
+          </button>
+          <button
+            type="button"
+            onClick={handleImprimir}
+            className="rounded-xl border border-black/15 px-6 py-3 text-base font-medium dark:border-white/15"
+          >
+            Imprimir
+          </button>
+        </div>
+
+        {shareError && <p className="text-sm text-red-600">{shareError}</p>}
+
         <Link
           href="/"
-          className="mt-4 rounded-xl bg-blue-600 px-6 py-3 text-base font-medium text-white"
+          className="mt-2 text-sm text-black/60 underline dark:text-white/60"
         >
           Voltar ao início
         </Link>

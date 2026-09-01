@@ -1,9 +1,11 @@
 import {
   addDoc,
   collection,
+  collectionGroup,
   doc,
   getDocs,
   limit,
+  orderBy,
   query,
   runTransaction,
   where,
@@ -45,16 +47,7 @@ export async function createCustomer(
   return { id: ref.id, ...payload };
 }
 
-let seedCheckDone = false;
-
-export async function ensureBrandsSeeded(): Promise<void> {
-  if (seedCheckDone) return;
-  const existing = await getDocs(
-    query(collection(db, "brands"), where("storeId", "==", STORE_ID), limit(1)),
-  );
-  seedCheckDone = true;
-  if (!existing.empty) return;
-
+async function seedBrands(): Promise<void> {
   for (const seedBrand of SEED_BRANDS) {
     const brandRef = await addDoc(collection(db, "brands"), {
       storeId: STORE_ID,
@@ -69,18 +62,46 @@ export async function ensureBrandsSeeded(): Promise<void> {
   }
 }
 
-export async function getBrands(): Promise<Brand[]> {
-  const snap = await getDocs(
-    query(collection(db, "brands"), where("storeId", "==", STORE_ID)),
-  );
-  const brands = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Brand);
-  return brands.sort((a, b) => a.nome.localeCompare(b.nome));
+export interface Catalog {
+  brands: Brand[];
+  modelsByBrand: Record<string, Model[]>;
 }
 
-export async function getModels(brandId: string): Promise<Model[]> {
-  const snap = await getDocs(collection(db, "brands", brandId, "models"));
-  const models = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Model);
-  return models.sort((a, b) => a.nome.localeCompare(b.nome));
+let catalogCache: Catalog | null = null;
+
+async function fetchCatalog(): Promise<Catalog> {
+  const [brandsSnap, modelsSnap] = await Promise.all([
+    getDocs(query(collection(db, "brands"), where("storeId", "==", STORE_ID))),
+    getDocs(collectionGroup(db, "models")),
+  ]);
+
+  const brands = brandsSnap.docs
+    .map((d) => ({ id: d.id, ...d.data() }) as Brand)
+    .sort((a, b) => a.nome.localeCompare(b.nome));
+
+  const modelsByBrand: Record<string, Model[]> = {};
+  for (const d of modelsSnap.docs) {
+    const brandId = d.ref.parent.parent!.id;
+    (modelsByBrand[brandId] ??= []).push({ id: d.id, ...d.data() } as Model);
+  }
+  for (const brandId in modelsByBrand) {
+    modelsByBrand[brandId].sort((a, b) => a.nome.localeCompare(b.nome));
+  }
+
+  return { brands, modelsByBrand };
+}
+
+export async function getCatalog(): Promise<Catalog> {
+  if (catalogCache) return catalogCache;
+
+  let catalog = await fetchCatalog();
+  if (catalog.brands.length === 0) {
+    await seedBrands();
+    catalog = await fetchCatalog();
+  }
+
+  catalogCache = catalog;
+  return catalog;
 }
 
 async function getNextOsNumber(): Promise<number> {
@@ -102,4 +123,11 @@ export async function createServiceOrder(
   const payload = { ...data, storeId: STORE_ID, number, createdAt: now, updatedAt: now };
   const ref = await addDoc(collection(db, "serviceOrders"), payload);
   return { id: ref.id, ...payload };
+}
+
+export async function getRecentServiceOrders(count = 20): Promise<ServiceOrder[]> {
+  const snap = await getDocs(
+    query(collection(db, "serviceOrders"), orderBy("createdAt", "desc"), limit(count)),
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as ServiceOrder);
 }
