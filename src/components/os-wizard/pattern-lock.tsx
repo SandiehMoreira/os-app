@@ -22,6 +22,17 @@ const POSITIONS = PATTERN_POSITIONS;
 const SIZE = PATTERN_SIZE;
 const dotCenter = patternDotCenter;
 
+const PATTERN_COLOR_START: [number, number, number] = [147, 197, 253]; // azul claro (início)
+const PATTERN_COLOR_END: [number, number, number] = [21, 93, 252]; // azul escuro (fim)
+
+export function patternColorAt(index: number, total: number): string {
+  const t = total <= 1 ? 1 : index / (total - 1);
+  const [r, g, b] = PATTERN_COLOR_START.map((start, i) =>
+    Math.round(start + (PATTERN_COLOR_END[i] - start) * t),
+  );
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 function nearestDot(x: number, y: number): number | null {
   for (let i = 0; i < 9; i++) {
     const c = dotCenter(i);
@@ -91,7 +102,7 @@ export function PatternLock({
                 y1={a.y}
                 x2={b.x}
                 y2={b.y}
-                stroke="#155DFC"
+                stroke={patternColorAt(idx + 1, value.length)}
                 strokeWidth={4}
                 strokeLinecap="round"
               />
@@ -103,21 +114,22 @@ export function PatternLock({
               y1={dotCenter(value[value.length - 1]).y}
               x2={pointer.x}
               y2={pointer.y}
-              stroke="#155DFC"
+              stroke={patternColorAt(value.length - 1, value.length)}
               strokeWidth={4}
               strokeLinecap="round"
             />
           )}
           {POSITIONS.map((_, i) => {
             const c = dotCenter(i);
-            const active = value.includes(i);
+            const sequenceIndex = value.indexOf(i);
+            const active = sequenceIndex !== -1;
             return (
               <circle
                 key={i}
                 cx={c.x}
                 cy={c.y}
                 r={active ? 14 : 10}
-                fill={active ? "#155DFC" : "#9CA3AF"}
+                fill={active ? patternColorAt(sequenceIndex, value.length) : "#9CA3AF"}
               />
             );
           })}

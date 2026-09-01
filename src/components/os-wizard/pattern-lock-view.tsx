@@ -1,4 +1,4 @@
-import { PATTERN_POSITIONS, PATTERN_SIZE, patternDotCenter } from "./pattern-lock";
+import { PATTERN_POSITIONS, PATTERN_SIZE, patternColorAt, patternDotCenter } from "./pattern-lock";
 
 export function PatternLockView({ value }: { value: number[] }) {
   return (
@@ -13,7 +13,7 @@ export function PatternLockView({ value }: { value: number[] }) {
             y1={a.y}
             x2={b.x}
             y2={b.y}
-            stroke="#155DFC"
+            stroke={patternColorAt(idx + 1, value.length)}
             strokeWidth={4}
             strokeLinecap="round"
           />
@@ -21,14 +21,15 @@ export function PatternLockView({ value }: { value: number[] }) {
       })}
       {PATTERN_POSITIONS.map((_, i) => {
         const c = patternDotCenter(i);
-        const active = value.includes(i);
+        const sequenceIndex = value.indexOf(i);
+        const active = sequenceIndex !== -1;
         return (
           <circle
             key={i}
             cx={c.x}
             cy={c.y}
             r={active ? 14 : 10}
-            fill={active ? "#155DFC" : "#9CA3AF"}
+            fill={active ? patternColorAt(sequenceIndex, value.length) : "#9CA3AF"}
           />
         );
       })}
