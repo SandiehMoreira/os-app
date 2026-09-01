@@ -3,6 +3,7 @@ import {
   collection,
   collectionGroup,
   doc,
+  getDoc,
   getDocs,
   limit,
   orderBy,
@@ -130,4 +131,9 @@ export async function getRecentServiceOrders(count = 20): Promise<ServiceOrder[]
     query(collection(db, "serviceOrders"), orderBy("createdAt", "desc"), limit(count)),
   );
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as ServiceOrder);
+}
+
+export async function getServiceOrder(id: string): Promise<ServiceOrder | null> {
+  const snap = await getDoc(doc(db, "serviceOrders", id));
+  return snap.exists() ? ({ id: snap.id, ...snap.data() } as ServiceOrder) : null;
 }

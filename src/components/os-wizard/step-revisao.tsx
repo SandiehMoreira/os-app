@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { OsActions } from "@/components/os-actions";
 import { useAuth } from "@/lib/auth-context";
 import { createCustomer, createServiceOrder } from "@/lib/firestore-service";
-import { generateOsPdf, getOsPdfFile } from "@/lib/generate-os-pdf";
 import { OS_STATUS_LABELS, type ServiceOrder } from "@/types/os";
 import type { StepProps } from "./types";
 
@@ -13,7 +13,6 @@ export function StepRevisao({ state, onBack }: StepProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedOrder, setSavedOrder] = useState<ServiceOrder | null>(null);
-  const [shareError, setShareError] = useState<string | null>(null);
 
   async function handleSalvar() {
     if (!user) return;
@@ -85,39 +84,9 @@ export function StepRevisao({ state, onBack }: StepProps) {
     }
   }
 
-  async function handleCompartilhar() {
-    if (!savedOrder) return;
-    setShareError(null);
-    const file = getOsPdfFile(savedOrder);
-    try {
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: `OS #${String(savedOrder.number).padStart(4, "0")}`,
-        });
-        return;
-      }
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") return;
-    }
-    setShareError("Compartilhamento não disponível neste navegador. Use \"Baixar PDF\".");
-  }
-
-  function handleBaixar() {
-    if (!savedOrder) return;
-    generateOsPdf(savedOrder).save(`OS-${String(savedOrder.number).padStart(4, "0")}.pdf`);
-  }
-
-  function handleImprimir() {
-    if (!savedOrder) return;
-    const doc = generateOsPdf(savedOrder);
-    doc.autoPrint();
-    window.open(doc.output("bloburl"), "_blank");
-  }
-
   if (savedOrder !== null) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom)+28px)] text-center">
         <p className="text-sm text-black/60 dark:text-white/60">OS criada com sucesso</p>
         <p className="text-4xl font-semibold">
           #{String(savedOrder.number).padStart(4, "0")}
@@ -126,31 +95,9 @@ export function StepRevisao({ state, onBack }: StepProps) {
           Status: {OS_STATUS_LABELS.recebido}
         </p>
 
-        <div className="mt-4 flex w-full max-w-xs flex-col gap-2">
-          <button
-            type="button"
-            onClick={handleCompartilhar}
-            className="rounded-xl bg-blue-600 px-6 py-3 text-base font-medium text-white"
-          >
-            Compartilhar (WhatsApp etc.)
-          </button>
-          <button
-            type="button"
-            onClick={handleBaixar}
-            className="rounded-xl border border-black/15 px-6 py-3 text-base font-medium dark:border-white/15"
-          >
-            Baixar PDF
-          </button>
-          <button
-            type="button"
-            onClick={handleImprimir}
-            className="rounded-xl border border-black/15 px-6 py-3 text-base font-medium dark:border-white/15"
-          >
-            Imprimir
-          </button>
+        <div className="mt-4 w-full max-w-xs">
+          <OsActions order={savedOrder} />
         </div>
-
-        {shareError && <p className="text-sm text-red-600">{shareError}</p>}
 
         <Link
           href="/"
@@ -220,7 +167,7 @@ export function StepRevisao({ state, onBack }: StepProps) {
         {error && <p className="text-sm text-red-600">{error}</p>}
       </div>
 
-      <div className="flex gap-3 border-t border-black/10 p-4 dark:border-white/10">
+      <div className="flex gap-3 border-t border-black/10 p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+28px)] dark:border-white/10">
         <button
           type="button"
           onClick={onBack}

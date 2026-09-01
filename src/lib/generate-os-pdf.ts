@@ -29,7 +29,31 @@ function formatDate(ms?: number) {
   return new Date(ms).toLocaleDateString("pt-BR");
 }
 
-export function generateOsPdf(order: ServiceOrder): jsPDF {
+async function loadImageAsDataUrl(
+  url: string,
+): Promise<{ dataUrl: string; width: number; height: number } | null> {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    const dims = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+    return { dataUrl, ...dims };
+  } catch {
+    return null;
+  }
+}
+
+export async function generateOsPdf(order: ServiceOrder): Promise<jsPDF> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = MARGIN;
 
@@ -129,13 +153,56 @@ export function generateOsPdf(order: ServiceOrder): jsPDF {
   doc.setFontSize(9);
   doc.text("Assinatura do cliente", MARGIN, y);
 
+  if (order.fotos.length > 0) {
+    doc.addPage();
+    y = MARGIN;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Fotos do aparelho na entrada", MARGIN, y);
+    y += 8;
+    doc.setFont("helvetica", "normal");
+
+    for (const foto of order.fotos) {
+      const image = await loadImageAsDataUrl(foto.url);
+      if (!image) continue;
+
+      const maxWidth = CONTENT_WIDTH;
+      const maxHeight = 100;
+      const ratio = Math.min(maxWidth / image.width, maxHeight / image.height);
+      const width = image.width * ratio;
+      const height = image.height * ratio;
+
+      ensureSpace(height + 6);
+      doc.addImage(image.dataUrl, "JPEG", MARGIN, y, width, height);
+      y += height + 6;
+    }
+  }
+
   return doc;
 }
 
-export function getOsPdfFile(order: ServiceOrder): File {
-  const doc = generateOsPdf(order);
+export async function getOsPdfFile(order: ServiceOrder): Promise<File> {
+  const doc = await generateOsPdf(order);
   const blob = doc.output("blob");
   return new File([blob], `OS-${String(order.number).padStart(4, "0")}.pdf`, {
     type: "application/pdf",
   });
+}
+
+export async function getOsPhotoFiles(order: ServiceOrder): Promise<File[]> {
+  const files: File[] = [];
+  for (let i = 0; i < order.fotos.length; i++) {
+    try {
+      const res = await fetch(order.fotos[i].url);
+      const blob = await res.blob();
+      files.push(
+        new File([blob], `OS-${String(order.number).padStart(4, "0")}-foto${i + 1}.jpg`, {
+          type: blob.type || "image/jpeg",
+        }),
+      );
+    } catch {
+      // ignora foto que falhar ao baixar
+    }
+  }
+  return files;
 }

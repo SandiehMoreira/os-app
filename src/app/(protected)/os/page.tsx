@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getRecentServiceOrders } from "@/lib/firestore-service";
 import { OS_STATUS_LABELS, type ServiceOrder } from "@/types/os";
@@ -16,7 +17,7 @@ export default function OsListPage() {
   }, []);
 
   return (
-    <div className="flex flex-1 flex-col p-4">
+    <div className="flex flex-1 flex-col p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+28px)]">
       <h1 className="mb-4 text-lg font-semibold">OS geradas</h1>
 
       {orders === null && (
@@ -29,9 +30,10 @@ export default function OsListPage() {
 
       <div className="space-y-2">
         {orders?.map((order) => (
-          <div
+          <Link
             key={order.id}
-            className="rounded-lg border border-black/10 p-3 text-sm dark:border-white/10"
+            href={`/os/${order.id}`}
+            className="block rounded-lg border border-black/10 p-3 text-sm dark:border-white/10"
           >
             <div className="flex items-center justify-between">
               <span className="font-semibold">#{String(order.number).padStart(4, "0")}</span>
@@ -46,7 +48,7 @@ export default function OsListPage() {
             <p className="mt-1 text-xs text-black/40 dark:text-white/40">
               {formatDate(order.dataEntrada)}
             </p>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

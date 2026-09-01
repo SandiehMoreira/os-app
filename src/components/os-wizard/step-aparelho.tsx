@@ -8,6 +8,7 @@ import { WizardFooter } from "./wizard-footer";
 
 export function StepAparelho({ state, update, onNext, onBack }: StepProps) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [capacidadeCustom, setCapacidadeCustom] = useState(false);
 
   useEffect(() => {
     getCatalog().then(setCatalog);
@@ -19,6 +20,7 @@ export function StepAparelho({ state, update, onNext, onBack }: StepProps) {
 
   function handleBrandChange(brandId: string) {
     const brand = brands.find((b) => b.id === brandId);
+    setCapacidadeCustom(false);
     update({
       brandId,
       brandName: brand?.nome ?? "",
@@ -31,6 +33,7 @@ export function StepAparelho({ state, update, onNext, onBack }: StepProps) {
 
   function handleModelChange(modelId: string) {
     const model = models.find((m) => m.id === modelId);
+    setCapacidadeCustom(false);
     update({
       modelId,
       modelName: model?.nome ?? "",
@@ -108,17 +111,38 @@ export function StepAparelho({ state, update, onNext, onBack }: StepProps) {
           </div>
           <div className="flex-1 space-y-1">
             <label className="text-sm font-medium">Capacidade</label>
-            <input
-              type="text"
-              list="capacidades-sugeridas"
-              value={state.capacidade}
-              onChange={(e) => update({ capacidade: e.target.value })}
-              placeholder="128GB"
-              className="w-full rounded-lg border border-black/15 px-3 py-2.5 text-base outline-none focus:border-blue-600 dark:border-white/15"
-            />
-            <datalist id="capacidades-sugeridas">
-              {selectedModel?.capacidades.map((cap) => <option key={cap} value={cap} />)}
-            </datalist>
+            {capacidadeCustom ? (
+              <input
+                type="text"
+                autoFocus
+                value={state.capacidade}
+                onChange={(e) => update({ capacidade: e.target.value })}
+                placeholder="Ex: 32GB"
+                className="w-full rounded-lg border border-black/15 px-3 py-2.5 text-base outline-none focus:border-blue-600 dark:border-white/15"
+              />
+            ) : (
+              <select
+                value={state.capacidade}
+                onChange={(e) => {
+                  if (e.target.value === "__outra__") {
+                    setCapacidadeCustom(true);
+                    update({ capacidade: "" });
+                  } else {
+                    update({ capacidade: e.target.value });
+                  }
+                }}
+                disabled={!selectedModel}
+                className="w-full rounded-lg border border-black/15 px-3 py-2.5 text-base outline-none focus:border-blue-600 dark:border-white/15"
+              >
+                <option value="">Selecione</option>
+                {selectedModel?.capacidades.map((cap) => (
+                  <option key={cap} value={cap}>
+                    {cap}
+                  </option>
+                ))}
+                <option value="__outra__">Outra...</option>
+              </select>
+            )}
           </div>
         </div>
 

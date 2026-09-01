@@ -12,7 +12,7 @@ export function WizardFooter({
   hideBack?: boolean;
 }) {
   return (
-    <div className="flex gap-3 border-t border-black/10 p-4 dark:border-white/10">
+    <div className="flex gap-3 border-t border-black/10 p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+28px)] dark:border-white/10">
       {!hideBack && (
         <button
           type="button"

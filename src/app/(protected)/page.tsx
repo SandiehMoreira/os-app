@@ -13,7 +13,7 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <div className="flex flex-1 flex-col gap-4 p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+28px)]">
       <Link
         href="/os/novo"
         className="rounded-xl bg-blue-600 px-4 py-3 text-center text-base font-medium text-white"
@@ -42,9 +42,10 @@ export default function DashboardPage() {
         )}
 
         {recent?.map((order) => (
-          <div
+          <Link
             key={order.id}
-            className="rounded-lg border border-black/10 p-3 text-sm dark:border-white/10"
+            href={`/os/${order.id}`}
+            className="block rounded-lg border border-black/10 p-3 text-sm dark:border-white/10"
           >
             <div className="flex items-center justify-between">
               <span className="font-semibold">#{String(order.number).padStart(4, "0")}</span>
@@ -56,7 +57,7 @@ export default function DashboardPage() {
             <p className="text-black/60 dark:text-white/60">
               {order.device.brandName} {order.device.modelName}
             </p>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
