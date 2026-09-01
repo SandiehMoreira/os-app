@@ -1,14 +1,18 @@
 "use client";
 
 import { signOut } from "firebase/auth";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { auth } from "@/lib/firebase";
 
+const OS_DETAIL_PATH = /^\/os\/(?!novo$)[^/]+$/;
+
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, loading } = useAuth();
+  const isOsDetail = OS_DETAIL_PATH.test(pathname);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -28,12 +32,21 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-full flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-black/10 px-4 py-3 dark:border-white/10">
         <span className="font-semibold">OS Assistência Técnica</span>
-        <button
-          onClick={() => signOut(auth)}
-          className="text-sm text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white"
-        >
-          Sair
-        </button>
+        {isOsDetail ? (
+          <button
+            onClick={() => router.push("/")}
+            className="text-sm text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white"
+          >
+            Voltar
+          </button>
+        ) : (
+          <button
+            onClick={() => signOut(auth)}
+            className="text-sm text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white"
+          >
+            Sair
+          </button>
+        )}
       </header>
       <main className="flex flex-1 flex-col">{children}</main>
     </div>
