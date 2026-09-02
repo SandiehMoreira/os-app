@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { getRecentServiceOrders } from "@/lib/firestore-service";
 import { OS_STATUS_LABELS, type ServiceOrder } from "@/types/os";
 
-function formatDate(ms: number) {
+function formatDate(ms?: number) {
+  if (!ms) return "-";
   return new Date(ms).toLocaleDateString("pt-BR");
 }
 
@@ -46,7 +47,7 @@ export default function OsListPage() {
               {order.device.brandName} {order.device.modelName}
             </p>
             <p className="mt-1 text-xs text-black/40 dark:text-white/40">
-              {formatDate(order.dataEntrada)}
+              Entrada: {formatDate(order.dataEntrada)} · Saída: {formatDate(order.prazoEntrega)}
             </p>
           </Link>
         ))}

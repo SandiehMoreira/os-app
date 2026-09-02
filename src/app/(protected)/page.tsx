@@ -5,6 +5,11 @@ import { useEffect, useState } from "react";
 import { getRecentServiceOrders } from "@/lib/firestore-service";
 import { OS_STATUS_LABELS, type ServiceOrder } from "@/types/os";
 
+function formatDate(ms?: number) {
+  if (!ms) return "-";
+  return new Date(ms).toLocaleDateString("pt-BR");
+}
+
 export default function DashboardPage() {
   const [recent, setRecent] = useState<ServiceOrder[] | null>(null);
 
@@ -56,6 +61,9 @@ export default function DashboardPage() {
             <p className="mt-1">{order.customerSnapshot.nome}</p>
             <p className="text-black/60 dark:text-white/60">
               {order.device.brandName} {order.device.modelName}
+            </p>
+            <p className="mt-1 text-xs text-black/40 dark:text-white/40">
+              Entrada: {formatDate(order.dataEntrada)} · Saída: {formatDate(order.prazoEntrega)}
             </p>
           </Link>
         ))}
