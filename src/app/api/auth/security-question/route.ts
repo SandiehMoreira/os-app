@@ -8,17 +8,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "E-mail é obrigatório." }, { status: 400 });
   }
 
-  const snap = await adminDb
-    .collection("securityAnswers")
-    .doc(normalizeEmail(email))
-    .get();
+  try {
+    const snap = await adminDb.collection("securityAnswers").doc(normalizeEmail(email)).get();
 
-  if (!snap.exists) {
-    return NextResponse.json(
-      { error: "Não encontramos uma conta com esse e-mail." },
-      { status: 404 },
-    );
+    if (!snap.exists) {
+      return NextResponse.json(
+        { error: "Não encontramos uma conta com esse e-mail." },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({ question: snap.data()!.question });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Erro desconhecido";
+    return NextResponse.json({ error: `Erro interno: ${message}` }, { status: 500 });
   }
-
-  return NextResponse.json({ question: snap.data()!.question });
 }

@@ -21,15 +21,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Preencha a pergunta e a resposta." }, { status: 400 });
   }
 
-  const email = normalizeEmail(decoded.email ?? "");
-  await adminDb.collection("securityAnswers").doc(email).set({
-    uid: decoded.uid,
-    email,
-    question: question.trim(),
-    answerHash: hashAnswer(answer),
-    failedAttempts: 0,
-    updatedAt: Date.now(),
-  });
+  try {
+    const email = normalizeEmail(decoded.email ?? "");
+    await adminDb.collection("securityAnswers").doc(email).set({
+      uid: decoded.uid,
+      email,
+      question: question.trim(),
+      answerHash: hashAnswer(answer),
+      failedAttempts: 0,
+      updatedAt: Date.now(),
+    });
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Erro desconhecido";
+    return NextResponse.json({ error: `Erro interno: ${message}` }, { status: 500 });
+  }
 }
