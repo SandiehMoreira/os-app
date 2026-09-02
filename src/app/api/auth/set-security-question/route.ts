@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { hashAnswer, normalizeEmail } from "@/lib/security-answer-hash";
 
 export async function POST(request: Request) {
@@ -9,19 +9,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
-  let decoded;
   try {
-    decoded = await adminAuth.verifyIdToken(idToken);
-  } catch {
-    return NextResponse.json({ error: "Sessão inválida." }, { status: 401 });
-  }
+    const adminAuth = getAdminAuth();
+    const adminDb = getAdminDb();
 
-  const { question, answer } = await request.json();
-  if (!question?.trim() || !answer?.trim()) {
-    return NextResponse.json({ error: "Preencha a pergunta e a resposta." }, { status: 400 });
-  }
+    let decoded;
+    try {
+      decoded = await adminAuth.verifyIdToken(idToken);
+    } catch {
+      return NextResponse.json({ error: "Sessão inválida." }, { status: 401 });
+    }
 
-  try {
+    const { question, answer } = await request.json();
+    if (!question?.trim() || !answer?.trim()) {
+      return NextResponse.json({ error: "Preencha a pergunta e a resposta." }, { status: 400 });
+    }
+
     const email = normalizeEmail(decoded.email ?? "");
     await adminDb.collection("securityAnswers").doc(email).set({
       uid: decoded.uid,

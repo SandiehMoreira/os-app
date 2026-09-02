@@ -1,6 +1,6 @@
-import { cert, getApps, initializeApp } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
+import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
+import { getAuth, type Auth } from "firebase-admin/auth";
+import { getFirestore, type Firestore } from "firebase-admin/firestore";
 
 // Painéis de hospedagem (Netlify/Vercel) guardam o valor colado ao pé da
 // letra — se alguém colar com aspas em volta (comum ao copiar de um .env),
@@ -17,15 +17,37 @@ function normalizePrivateKey(key: string | undefined): string | undefined {
   return value.replace(/\\n/g, "\n");
 }
 
-const app = getApps().length
-  ? getApps()[0]!
-  : initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-        privateKey: normalizePrivateKey(process.env.FIREBASE_ADMIN_PRIVATE_KEY),
-      }),
-    });
+let app: App | null = null;
 
-export const adminAuth = getAuth(app);
-export const adminDb = getFirestore(app);
+// Inicialização preguiçosa (só na primeira requisição): se rodar no topo do
+// módulo e `cert()` lançar (ex: env var ausente nesse runtime específico),
+// o erro acontece antes de qualquer try/catch da rota conseguir capturá-lo,
+// e a resposta vira um 500 vazio sem pista nenhuma do motivo.
+function getAdminApp(): App {
+  if (app) return app;
+  if (getApps().length) {
+    app = getApps()[0]!;
+    return app;
+  }
+
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+  const privateKey = normalizePrivateKey(process.env.FIREBASE_ADMIN_PRIVATE_KEY);
+
+  if (!projectId || !clientEmail || !privateKey) {
+    throw new Error(
+      `Variáveis do Admin SDK ausentes neste ambiente (projectId=${!!projectId}, clientEmail=${!!clientEmail}, privateKey=${!!privateKey})`,
+    );
+  }
+
+  app = initializeApp({ credential: cert({ projectId, clientEmail, privateKey }) });
+  return app;
+}
+
+export function getAdminAuth(): Auth {
+  return getAuth(getAdminApp());
+}
+
+export function getAdminDb(): Firestore {
+  return getFirestore(getAdminApp());
+}

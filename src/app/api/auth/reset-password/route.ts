@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { hashAnswer, normalizeEmail } from "@/lib/security-answer-hash";
 
 const MAX_ATTEMPTS = 5;
@@ -18,6 +18,8 @@ export async function POST(request: Request) {
   }
 
   try {
+    const adminAuth = getAdminAuth();
+    const adminDb = getAdminDb();
     const docRef = adminDb.collection("securityAnswers").doc(normalizeEmail(email));
     const snap = await docRef.get();
     if (!snap.exists) {

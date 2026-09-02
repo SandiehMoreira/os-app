@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { normalizeEmail } from "@/lib/security-answer-hash";
 
 export async function POST(request: Request) {
@@ -9,6 +9,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const adminDb = getAdminDb();
     const snap = await adminDb.collection("securityAnswers").doc(normalizeEmail(email)).get();
 
     if (!snap.exists) {
