@@ -16,8 +16,9 @@ const eslintConfig = defineConfig([
     "public/sw.js",
     "public/sw.js.map",
     "public/swe-worker-*.js",
-    // Cloud Functions: projeto Node.js/CommonJS separado, com seu próprio lint.
-    "functions/**",
+    // Projeto nativo Android gerado pelo Capacitor (contém uma cópia do
+    // build estático em assets/public, não é código-fonte pra lintar).
+    "android/**",
   ]),
 ]);
 
