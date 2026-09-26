@@ -25,12 +25,5 @@ service cloud.firestore {
     match /settings/{id} {
       allow read, write: if request.auth != null;
     }
-
-    // Perguntas/respostas de recuperação de senha: nunca acessível pelo
-    // cliente. Só as Cloud Functions (Admin SDK, ignora estas regras) leem
-    // e escrevem aqui.
-    match /securityAnswers/{email} {
-      allow read, write: if false;
-    }
   }
 }

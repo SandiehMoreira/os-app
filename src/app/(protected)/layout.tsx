@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { auth } from "@/lib/firebase";
 
-const OS_DETAIL_PATH = /^\/os\/(?!novo$)[^/]+$/;
+const OS_DETAIL_PATH = /^\/os\/detalhe\/?$/;
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();

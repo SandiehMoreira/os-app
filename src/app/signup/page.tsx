@@ -5,15 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { auth } from "@/lib/firebase";
-import { SECURITY_QUESTIONS, setSecurityQuestion } from "@/lib/security-question";
 
 export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [question, setQuestion] = useState<string>(SECURITY_QUESTIONS[0]);
-  const [answer, setAnswer] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -25,15 +22,10 @@ export default function SignupPage() {
       setError("As senhas não coincidem.");
       return;
     }
-    if (answer.trim().length === 0) {
-      setError("Preencha a resposta da pergunta de segurança.");
-      return;
-    }
 
     setSubmitting(true);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      await setSecurityQuestion(question, answer);
       router.replace("/");
     } catch {
       setError("Não foi possível criar a conta. Verifique os dados e tente novamente.");
@@ -98,41 +90,6 @@ export default function SignupPage() {
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full rounded-lg border border-black/15 px-3 py-2.5 text-base outline-none focus:border-blue-600 dark:border-white/15"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="question" className="text-sm font-medium">
-            Pergunta de segurança
-          </label>
-          <select
-            id="question"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            className="w-full rounded-lg border border-black/15 px-3 py-2.5 text-base outline-none focus:border-blue-600 dark:border-white/15"
-          >
-            {SECURITY_QUESTIONS.map((q) => (
-              <option key={q} value={q}>
-                {q}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-black/50 dark:text-white/50">
-            Usada para recuperar sua senha caso você esqueça.
-          </p>
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="answer" className="text-sm font-medium">
-            Resposta
-          </label>
-          <input
-            id="answer"
-            type="text"
-            required
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
             className="w-full rounded-lg border border-black/15 px-3 py-2.5 text-base outline-none focus:border-blue-600 dark:border-white/15"
           />
         </div>

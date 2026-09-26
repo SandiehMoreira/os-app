@@ -1,9 +1,7 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { OsActions } from "@/components/os-actions";
 import { PatternLockView } from "@/components/os-wizard/pattern-lock-view";
 import { getServiceOrder } from "@/lib/firestore-service";
@@ -23,26 +21,28 @@ function formatDate(ms?: number) {
   return new Date(ms).toLocaleDateString("pt-BR");
 }
 
-export default function OsDetailPage() {
-  const params = useParams<{ id: string }>();
+function OsDetailContent() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
   const [order, setOrder] = useState<ServiceOrder | null | undefined>(undefined);
 
   useEffect(() => {
-    getServiceOrder(params.id).then(setOrder);
-  }, [params.id]);
+    if (!id) return;
+    getServiceOrder(id).then(setOrder);
+  }, [id]);
+
+  if (!id || order === null) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <p className="text-sm text-black/50 dark:text-white/50">OS não encontrada.</p>
+      </div>
+    );
+  }
 
   if (order === undefined) {
     return (
       <div className="flex flex-1 items-center justify-center p-6">
         <p className="text-sm text-black/50 dark:text-white/50">Carregando...</p>
-      </div>
-    );
-  }
-
-  if (order === null) {
-    return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <p className="text-sm text-black/50 dark:text-white/50">OS não encontrada.</p>
       </div>
     );
   }
@@ -163,6 +163,20 @@ export default function OsDetailPage() {
         <OsActions order={order} />
       </div>
     </div>
+  );
+}
+
+export default function OsDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-1 items-center justify-center p-6">
+          <p className="text-sm text-black/50 dark:text-white/50">Carregando...</p>
+        </div>
+      }
+    >
+      <OsDetailContent />
+    </Suspense>
   );
 }
 

@@ -33,7 +33,7 @@ export default function OsListPage() {
         {orders?.map((order) => (
           <Link
             key={order.id}
-            href={`/os/${order.id}`}
+            href={`/os/detalhe?id=${order.id}`}
             className="block rounded-lg border border-black/10 p-3 text-sm dark:border-white/10"
           >
             <div className="flex items-center justify-between">
