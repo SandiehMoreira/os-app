@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getRecentServiceOrders } from "@/lib/firestore-service";
+import { getRecentServiceOrders } from "@/lib/data-service";
 import { OS_STATUS_LABELS, type ServiceOrder } from "@/types/os";
 
 function formatDate(ms?: number) {

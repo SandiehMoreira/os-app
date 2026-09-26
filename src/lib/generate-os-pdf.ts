@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import { getStoreSettings } from "@/lib/firestore-service";
+import { getStoreSettings } from "@/lib/data-service";
 import {
   CHECKLIST_ITEMS,
   CHECKLIST_ITEMS_CONDICIONAIS,

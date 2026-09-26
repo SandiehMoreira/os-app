@@ -7,9 +7,10 @@ import {
   updatePassword,
 } from "firebase/auth";
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { getBackendMode, setBackendMode, type BackendMode } from "@/lib/backend-mode";
 import { useAuth } from "@/lib/auth-context";
 import { uploadPhotoToCloudinary } from "@/lib/cloudinary";
-import { getStoreSettings, updateStoreSettings } from "@/lib/firestore-service";
+import { getStoreSettings, updateStoreSettings } from "@/lib/data-service";
 import { useTheme, type Theme } from "@/lib/theme-context";
 import { TERMO_RESPONSABILIDADE_PADRAO } from "@/types/os";
 
@@ -46,9 +47,58 @@ export default function ConfiguracoesPage() {
         </div>
       </section>
 
+      <ArmazenamentoSection />
       <EmpresaSection />
       <ContaSection />
     </div>
+  );
+}
+
+function ArmazenamentoSection() {
+  const [mode, setMode] = useState<BackendMode>(() => getBackendMode());
+
+  function handleChange(next: BackendMode) {
+    setBackendMode(next);
+    setMode(next);
+  }
+
+  return (
+    <section className="space-y-2 border-t border-black/10 pt-4 dark:border-white/10">
+      <h2 className="text-sm font-medium">Onde salvar os dados</h2>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => handleChange("local")}
+          className={`rounded-lg border px-3 py-2.5 text-sm font-medium ${
+            mode === "local"
+              ? "border-blue-600 bg-blue-600 text-white"
+              : "border-black/15 dark:border-white/15"
+          }`}
+        >
+          Local (sem internet)
+        </button>
+        <button
+          type="button"
+          onClick={() => handleChange("cloud")}
+          className={`rounded-lg border px-3 py-2.5 text-sm font-medium ${
+            mode === "cloud"
+              ? "border-blue-600 bg-blue-600 text-white"
+              : "border-black/15 dark:border-white/15"
+          }`}
+        >
+          Nuvem (com backup)
+        </button>
+      </div>
+      <p className="text-xs text-black/50 dark:text-white/50">
+        {mode === "local"
+          ? "Os dados ficam só neste aparelho, funciona 100% sem internet. Sem backup — se desinstalar o app ou trocar de aparelho, os dados se perdem."
+          : "Os dados ficam salvos na nuvem, com backup automático. Funciona offline no dia a dia (sincroniza sozinho quando a internet voltar)."}
+      </p>
+      <p className="text-xs text-amber-600">
+        Trocar o modo não move os dados de um lado pro outro — cada modo guarda os
+        dados separadamente. Escolha um e mantenha, se possível.
+      </p>
+    </section>
   );
 }
 

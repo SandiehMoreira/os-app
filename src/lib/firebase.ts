@@ -1,6 +1,11 @@
 import { getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, initializeFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentSingleTabManager,
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -17,6 +22,12 @@ const app = alreadyInitialized ? getApps()[0]! : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 // Campos opcionais do wizard chegam como `undefined` (ex: senha numérica quando
 // o cliente usou padrão de desenho) — sem isso o Firestore rejeita o write.
+// Cache local persistente: dá pra ler/escrever offline (modo "Nuvem"
+// também funciona sem internet no dia a dia) e sincroniza sozinho quando
+// a conexão voltar.
 export const db = alreadyInitialized
   ? getFirestore(app)
-  : initializeFirestore(app, { ignoreUndefinedProperties: true });
+  : initializeFirestore(app, {
+      ignoreUndefinedProperties: true,
+      localCache: persistentLocalCache({ tabManager: persistentSingleTabManager({}) }),
+    });

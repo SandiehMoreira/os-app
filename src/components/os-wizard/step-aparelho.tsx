@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCatalog, type Catalog } from "@/lib/firestore-service";
+import { getCatalog, type Catalog } from "@/lib/data-service";
 import { ACESSORIOS, CORES_APARELHO, type Acessorio } from "@/types/os";
 import type { StepProps } from "./types";
 import { WizardFooter } from "./wizard-footer";

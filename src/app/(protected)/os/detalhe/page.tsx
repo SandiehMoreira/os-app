@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { OsActions } from "@/components/os-actions";
 import { PatternLockView } from "@/components/os-wizard/pattern-lock-view";
-import { getServiceOrder } from "@/lib/firestore-service";
+import { getServiceOrder } from "@/lib/data-service";
 import {
   CHECKLIST_ITEMS,
   CHECKLIST_ITEMS_CONDICIONAIS,

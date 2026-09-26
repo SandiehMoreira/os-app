@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { searchCustomersByPhone } from "@/lib/firestore-service";
+import { searchCustomersByPhone } from "@/lib/data-service";
 import type { Customer, DocumentoTipo } from "@/types/os";
 import type { StepProps } from "./types";
 import { WizardFooter } from "./wizard-footer";

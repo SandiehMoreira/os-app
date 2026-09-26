@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { OsActions } from "@/components/os-actions";
 import { useAuth } from "@/lib/auth-context";
-import { createCustomer, createServiceOrder } from "@/lib/firestore-service";
+import { createCustomer, createServiceOrder } from "@/lib/data-service";
 import { OS_STATUS_LABELS, type ServiceOrder } from "@/types/os";
 import type { StepProps } from "./types";
 
