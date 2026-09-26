@@ -49,6 +49,9 @@ HANDOFF.md
 # firebase
 .firebase
 
+# electron
+/dist-electron
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

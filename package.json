@@ -1,17 +1,23 @@
 {
   "name": "os-app",
   "version": "0.1.0",
+  "description": "Ordens de serviço para assistência técnica de celulares.",
+  "author": "OS Tecnica",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "electron:dev": "electron .",
+    "electron:build": "electron-builder --publish=never"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
     "@capacitor/core": "^8.5.2",
     "@serwist/next": "^9.5.12",
+    "electron-serve": "^3.0.1",
     "firebase": "^12.18.0",
     "idb": "^8.0.3",
     "jspdf": "^4.2.1",
@@ -26,9 +32,32 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "build": {
+    "appId": "com.ostecnica.app",
+    "productName": "OS Tecnica",
+    "files": [
+      "electron/**/*",
+      "out/**/*",
+      "package.json",
+      "!node_modules/**/*",
+      "node_modules/electron-serve/**/*"
+    ],
+    "directories": {
+      "output": "dist-electron"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Office"
+    }
   }
 }

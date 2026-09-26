@@ -19,6 +19,10 @@ const eslintConfig = defineConfig([
     // Projeto nativo Android gerado pelo Capacitor (contém uma cópia do
     // build estático em assets/public, não é código-fonte pra lintar).
     "android/**",
+    // Processo principal do Electron: Node.js/CommonJS puro, fora do
+    // bundle do Next.js, com suas próprias convenções (require()).
+    "electron/**",
+    "dist-electron/**",
   ]),
 ]);
 
