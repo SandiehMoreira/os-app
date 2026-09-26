@@ -40,8 +40,6 @@ yarn-error.log*
 .env*
 !.env.example
 
-# documentação interna com credenciais reais — nunca versionar
-HANDOFF.md
 
 # vercel
 .vercel
