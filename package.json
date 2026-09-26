@@ -2,7 +2,10 @@
   "name": "os-app",
   "version": "0.1.0",
   "description": "Ordens de serviço para assistência técnica de celulares.",
-  "author": "OS Tecnica",
+  "author": {
+    "name": "OS Tecnica",
+    "email": "contato@ostecnica.app"
+  },
   "private": true,
   "main": "electron/main.js",
   "scripts": {
