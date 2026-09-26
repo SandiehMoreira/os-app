@@ -56,11 +56,19 @@
       "output": "dist-electron"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "OS-Tecnica-Windows-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     },
     "linux": {
       "target": ["AppImage", "deb"],
-      "category": "Office"
+      "category": "Office",
+      "artifactName": "OS-Tecnica-Linux.${ext}"
     }
   }
 }

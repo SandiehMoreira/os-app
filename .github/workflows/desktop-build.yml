@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   build:
     strategy:
@@ -49,3 +52,17 @@ jobs:
             dist-electron/*.AppImage
             dist-electron/*.deb
           if-no-files-found: error
+
+      - name: Publicar em um link fixo (GitHub Release "latest")
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Última versão"
+          body: "Build automático mais recente, gerado a cada atualização do app."
+          prerelease: true
+          files: |
+            dist-electron/*.exe
+            dist-electron/*.AppImage
+            dist-electron/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
