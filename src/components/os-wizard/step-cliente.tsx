@@ -7,6 +7,21 @@ import type { Customer, DocumentoTipo } from "@/types/os";
 import type { StepProps } from "./types";
 import { WizardFooter } from "./wizard-footer";
 
+function formatTelefone(rawDigits: string): string {
+  const d = rawDigits.slice(0, 11);
+  if (d.length === 0) return "";
+
+  let out = "(" + d.slice(0, 2);
+  if (d.length > 2) out += ") ";
+
+  const isCelular = d.length > 10;
+  const meioFim = isCelular ? 7 : 6;
+  if (d.length > 2) out += d.slice(2, meioFim);
+  if (d.length > meioFim) out += "-" + d.slice(meioFim, isCelular ? 11 : 10);
+
+  return out;
+}
+
 function formatDocumento(rawDigits: string, tipo: DocumentoTipo): string {
   if (tipo === "CPF") {
     const d = rawDigits.slice(0, 11);
@@ -87,8 +102,13 @@ export function StepCliente({ state, update, onNext, onBack }: StepProps) {
           <label className="text-sm font-medium">Telefone/WhatsApp</label>
           <input
             type="tel"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={state.customerTelefone}
-            onChange={(e) => update({ customerTelefone: e.target.value, customerId: undefined })}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, "");
+              update({ customerTelefone: formatTelefone(digits), customerId: undefined });
+            }}
             placeholder="(11) 91234-5678"
             className="w-full rounded-lg border border-black/15 px-3 py-2.5 text-base outline-none focus:border-blue-600 dark:border-white/15"
           />
