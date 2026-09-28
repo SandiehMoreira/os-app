@@ -43,6 +43,23 @@ function sortBrands(brands: Brand[]): Brand[] {
   });
 }
 
+// Mesma ideia para os modelos dentro de cada marca: mantém os mais
+// recentes (na ordem definida no seed) no topo; modelos cadastrados
+// manualmente ficam depois, em ordem alfabética.
+const SEED_MODEL_ORDER = new Map(
+  SEED_BRANDS.map((b) => [b.nome, new Map(b.models.map((m, i) => [m.nome, i]))]),
+);
+
+function sortModels(models: Model[], brandName: string | undefined): Model[] {
+  const order = brandName ? SEED_MODEL_ORDER.get(brandName) : undefined;
+  return [...models].sort((a, b) => {
+    const orderA = order?.get(a.nome) ?? Number.MAX_SAFE_INTEGER;
+    const orderB = order?.get(b.nome) ?? Number.MAX_SAFE_INTEGER;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.nome.localeCompare(b.nome);
+  });
+}
+
 export async function searchCustomersByPhone(phone: string): Promise<Customer[]> {
   const digits = onlyDigits(phone);
   if (digits.length < 4) return [];
@@ -132,8 +149,9 @@ async function fetchCatalog(): Promise<Catalog> {
     const brandId = d.ref.parent.parent!.id;
     (modelsByBrand[brandId] ??= []).push({ id: d.id, ...d.data() } as Model);
   }
+  const brandNameById = new Map(brands.map((b) => [b.id, b.nome]));
   for (const brandId in modelsByBrand) {
-    modelsByBrand[brandId].sort((a, b) => a.nome.localeCompare(b.nome));
+    modelsByBrand[brandId] = sortModels(modelsByBrand[brandId], brandNameById.get(brandId));
   }
 
   return { brands, modelsByBrand };
