@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { searchCustomersByPhone } from "@/lib/data-service";
+import { isValidDocumento } from "@/lib/document-validation";
 import type { Customer, DocumentoTipo } from "@/types/os";
 import type { StepProps } from "./types";
 import { WizardFooter } from "./wizard-footer";
@@ -62,10 +63,20 @@ export function StepCliente({ state, update, onNext, onBack }: StepProps) {
     update({ customerId: undefined });
   }
 
+  // Cliente já cadastrado: confia no documento salvo, não reaplica a
+  // validação (evita travar por causa de dados antigos/de outro estado).
+  const isExistingCustomer = Boolean(state.customerId);
+  const documentoDigits = state.customerDocumentoNumero.replace(/\D/g, "");
+  const documentoCompleto =
+    state.customerDocumentoTipo === "CPF" ? documentoDigits.length === 11 : documentoDigits.length === 9;
+  const documentoValido =
+    isExistingCustomer || !documentoCompleto || isValidDocumento(documentoDigits, state.customerDocumentoTipo);
+
   const canAdvance =
     state.customerNome.trim().length > 0 &&
     state.customerTelefone.trim().length > 0 &&
-    state.customerDocumentoNumero.trim().length > 0;
+    (isExistingCustomer || documentoCompleto) &&
+    documentoValido;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -155,10 +166,20 @@ export function StepCliente({ state, update, onNext, onBack }: StepProps) {
                 });
               }}
               placeholder={state.customerDocumentoTipo === "CPF" ? "000.000.000-00" : "00.000.000-0"}
-              className="w-full rounded-lg border border-black/15 px-3 py-2.5 text-base outline-none focus:border-blue-600 dark:border-white/15"
+              className={`w-full rounded-lg border px-3 py-2.5 text-base outline-none focus:border-blue-600 ${
+                documentoCompleto && !documentoValido
+                  ? "border-red-500"
+                  : "border-black/15 dark:border-white/15"
+              }`}
             />
           </div>
         </div>
+
+        {documentoCompleto && !documentoValido && (
+          <p className="text-sm text-red-600">
+            {state.customerDocumentoTipo} inválido — confere os números digitados.
+          </p>
+        )}
 
         <div className="space-y-1">
           <label className="text-sm font-medium">Endereço (opcional)</label>
