@@ -1,19 +1,26 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { OsActions } from "@/components/os-actions";
 import { useAuth } from "@/lib/auth-context";
-import { createCustomer, createServiceOrder } from "@/lib/data-service";
-import { OS_STATUS_LABELS, type ServiceOrder } from "@/types/os";
+import { createCustomer, createServiceOrder, updateServiceOrder } from "@/lib/data-service";
+import { OS_STATUS_LABELS, type OsStatus, type ServiceOrder } from "@/types/os";
 import type { StepProps } from "./types";
 
-export function StepRevisao({ state, onBack }: StepProps) {
+interface StepRevisaoProps extends StepProps {
+  existingOrder?: ServiceOrder;
+}
+
+export function StepRevisao({ state, onBack, existingOrder }: StepRevisaoProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [slowSave, setSlowSave] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedOrder, setSavedOrder] = useState<ServiceOrder | null>(null);
+  const [status, setStatus] = useState<OsStatus>(existingOrder?.status ?? "recebido");
 
   async function handleSalvar() {
     if (!user) return;
@@ -37,7 +44,7 @@ export function StepRevisao({ state, onBack }: StepProps) {
         customerId = customer.id;
       }
 
-      const order = await createServiceOrder({
+      const dadosComuns = {
         customerId,
         customerSnapshot: { nome: state.customerNome, telefone: state.customerTelefone },
         device: {
@@ -79,12 +86,27 @@ export function StepRevisao({ state, onBack }: StepProps) {
                 : undefined,
           };
         })(),
+        prazoEntrega: state.prazoEntrega ? new Date(state.prazoEntrega).getTime() : undefined,
+      };
+
+      if (existingOrder) {
+        await updateServiceOrder(existingOrder.id, {
+          ...dadosComuns,
+          status,
+          dataEntrada: existingOrder.dataEntrada,
+          tecnicoResponsavel: existingOrder.tecnicoResponsavel,
+        });
+        router.replace(`/os/detalhe?id=${existingOrder.id}`);
+        return;
+      }
+
+      const order = await createServiceOrder({
+        ...dadosComuns,
         tecnicoResponsavel: {
           uid: user.uid,
           nome: user.displayName || user.email || "Técnico",
         },
         dataEntrada: Date.now(),
-        prazoEntrega: state.prazoEntrega ? new Date(state.prazoEntrega).getTime() : undefined,
         status: "recebido",
       });
 
@@ -126,7 +148,24 @@ export function StepRevisao({ state, onBack }: StepProps) {
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
-        <h2 className="text-lg font-semibold">Revisão</h2>
+        <h2 className="text-lg font-semibold">{existingOrder ? "Revisar alterações" : "Revisão"}</h2>
+
+        {existingOrder && (
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Status da OS</label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as OsStatus)}
+              className="w-full rounded-lg border border-black/15 px-3 py-2.5 text-base outline-none focus:border-blue-600 dark:border-white/15"
+            >
+              {Object.entries(OS_STATUS_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <ResumoSecao titulo="Cliente">
           <p>{state.customerNome}</p>
@@ -219,7 +258,13 @@ export function StepRevisao({ state, onBack }: StepProps) {
           disabled={saving}
           className="flex-[2] rounded-xl bg-blue-600 px-4 py-3 text-base font-medium text-white disabled:opacity-50"
         >
-          {saving ? (slowSave ? "Ainda salvando..." : "Salvando...") : "Gerar OS"}
+          {saving
+            ? slowSave
+              ? "Ainda salvando..."
+              : "Salvando..."
+            : existingOrder
+              ? "Salvar alterações"
+              : "Gerar OS"}
         </button>
       </div>
     </div>

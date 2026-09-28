@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { OsActions } from "@/components/os-actions";
@@ -51,9 +52,17 @@ function OsDetailContent() {
     <div className="flex flex-1 flex-col gap-4 p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+28px)]">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">#{String(order.number).padStart(4, "0")}</h1>
-        <span className="rounded-full bg-blue-600/10 px-3 py-1 text-xs font-medium text-blue-600">
-          {OS_STATUS_LABELS[order.status]}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-blue-600/10 px-3 py-1 text-xs font-medium text-blue-600">
+            {OS_STATUS_LABELS[order.status]}
+          </span>
+          <Link
+            href={`/os/editar?id=${order.id}`}
+            className="rounded-full border border-black/15 px-3 py-1 text-xs font-medium dark:border-white/15"
+          >
+            Editar
+          </Link>
+        </div>
       </div>
 
       <Secao titulo="Cliente">

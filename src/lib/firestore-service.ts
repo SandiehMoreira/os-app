@@ -87,6 +87,11 @@ export async function createCustomer(
   return { id: ref.id, ...payload };
 }
 
+export async function getCustomer(id: string): Promise<Customer | null> {
+  const snap = await getDoc(doc(db, "customers", id));
+  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Customer) : null;
+}
+
 // Garante que todas as marcas/modelos do seed existam — cria as que
 // faltam e completa modelos novos em marcas que já existiam, sem tocar
 // em nada que a loja tenha cadastrado manualmente. Reusa o catálogo já
@@ -229,6 +234,13 @@ export async function getRecentServiceOrders(count = 20): Promise<ServiceOrder[]
 export async function getServiceOrder(id: string): Promise<ServiceOrder | null> {
   const snap = await getDoc(doc(db, "serviceOrders", id));
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as ServiceOrder) : null;
+}
+
+export async function updateServiceOrder(
+  id: string,
+  patch: Partial<Omit<ServiceOrder, "id" | "storeId" | "number" | "createdAt">>,
+): Promise<void> {
+  await setDoc(doc(db, "serviceOrders", id), { ...patch, updatedAt: Date.now() }, { merge: true });
 }
 
 const DEFAULT_STORE_SETTINGS: StoreSettings = {

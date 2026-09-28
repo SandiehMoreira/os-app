@@ -42,6 +42,12 @@ export async function createCustomerLocal(
   return customer;
 }
 
+export async function getCustomerLocal(id: string): Promise<Customer | null> {
+  const db = await getLocalDb();
+  const customer = (await db.get("customers", id)) as Customer | undefined;
+  return customer ?? null;
+}
+
 interface CustomCatalogEntry {
   brandName: string;
   modelName: string;
@@ -170,6 +176,16 @@ export async function getServiceOrderLocal(id: string): Promise<ServiceOrder | n
   const db = await getLocalDb();
   const order = (await db.get("serviceOrders", id)) as ServiceOrder | undefined;
   return order ?? null;
+}
+
+export async function updateServiceOrderLocal(
+  id: string,
+  patch: Partial<Omit<ServiceOrder, "id" | "storeId" | "number" | "createdAt">>,
+): Promise<void> {
+  const db = await getLocalDb();
+  const existing = (await db.get("serviceOrders", id)) as ServiceOrder | undefined;
+  if (!existing) return;
+  await db.put("serviceOrders", { ...existing, ...patch, updatedAt: Date.now() });
 }
 
 const DEFAULT_STORE_SETTINGS: StoreSettings = {

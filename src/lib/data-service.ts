@@ -20,6 +20,10 @@ export async function createCustomer(
     : cloud.createCustomer(data);
 }
 
+export async function getCustomer(id: string): Promise<Customer | null> {
+  return getBackendMode() === "local" ? local.getCustomerLocal(id) : cloud.getCustomer(id);
+}
+
 export async function getCatalog(): Promise<Catalog> {
   return getBackendMode() === "local" ? local.getCatalogLocal() : cloud.getCatalog();
 }
@@ -55,6 +59,15 @@ export async function getServiceOrder(id: string): Promise<ServiceOrder | null> 
   return getBackendMode() === "local"
     ? local.getServiceOrderLocal(id)
     : cloud.getServiceOrder(id);
+}
+
+export async function updateServiceOrder(
+  id: string,
+  patch: Partial<Omit<ServiceOrder, "id" | "storeId" | "number" | "createdAt">>,
+): Promise<void> {
+  return getBackendMode() === "local"
+    ? local.updateServiceOrderLocal(id, patch)
+    : cloud.updateServiceOrder(id, patch);
 }
 
 export async function getStoreSettings(): Promise<StoreSettings> {
