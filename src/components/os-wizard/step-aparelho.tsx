@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { addCustomBrandModel, getCatalog, type Catalog } from "@/lib/data-service";
 import { ACESSORIOS, CORES_APARELHO, type Acessorio } from "@/types/os";
+import { BarcodeScannerModal } from "./barcode-scanner-modal";
 import type { StepProps } from "./types";
 import { WizardFooter } from "./wizard-footer";
 
@@ -12,6 +13,7 @@ export function StepAparelho({ state, update, onNext, onBack }: StepProps) {
   const [corCustom, setCorCustom] = useState(
     state.cor !== "" && !(CORES_APARELHO as readonly string[]).includes(state.cor),
   );
+  const [scanningImei, setScanningImei] = useState(false);
 
   const [addingBrand, setAddingBrand] = useState(false);
   const [addingModel, setAddingModel] = useState(false);
@@ -311,13 +313,38 @@ export function StepAparelho({ state, update, onNext, onBack }: StepProps) {
 
         <div className="space-y-1">
           <label className="text-sm font-medium">IMEI ou número de série (opcional)</label>
-          <input
-            type="text"
-            value={state.imei}
-            onChange={(e) => update({ imei: e.target.value })}
-            className="w-full rounded-lg border border-black/15 px-3 py-2.5 text-base outline-none focus:border-blue-600 dark:border-white/15"
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={state.imei}
+              onChange={(e) => update({ imei: e.target.value })}
+              placeholder="Digite, cole ou leia o código de barras"
+              className="w-full rounded-lg border border-black/15 px-3 py-2.5 text-base outline-none focus:border-blue-600 dark:border-white/15"
+            />
+            <button
+              type="button"
+              onClick={() => setScanningImei(true)}
+              title="Ler código de barras pela câmera"
+              className="shrink-0 rounded-lg border border-black/15 px-3 py-2.5 text-sm font-medium dark:border-white/15"
+            >
+              📷
+            </button>
+          </div>
+          <p className="text-xs text-black/50 dark:text-white/50">
+            Também funciona com leitor de código de barras USB/Bluetooth do PC — basta clicar no
+            campo e escanear.
+          </p>
         </div>
+
+        {scanningImei && (
+          <BarcodeScannerModal
+            onResult={(text) => {
+              update({ imei: text.trim() });
+              setScanningImei(false);
+            }}
+            onClose={() => setScanningImei(false)}
+          />
+        )}
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Acessórios entregues junto</label>

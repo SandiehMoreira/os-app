@@ -20,6 +20,7 @@
     "@capacitor/android": "^8.5.2",
     "@capacitor/core": "^8.5.2",
     "@serwist/next": "^9.5.12",
+    "@zxing/browser": "^0.2.1",
     "electron-serve": "^3.0.1",
     "firebase": "^12.18.0",
     "idb": "^8.0.3",
@@ -70,7 +71,10 @@
       "createStartMenuShortcut": true
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "category": "Office",
       "artifactName": "OS-Tecnica-Linux.${ext}"
     }
