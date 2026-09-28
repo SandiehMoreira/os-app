@@ -13,8 +13,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { STORE_ID } from "@/lib/constants";
+import { auth, db } from "@/lib/firebase";
 import { SEED_BRANDS } from "@/lib/seed-data";
 import {
   TERMO_RESPONSABILIDADE_PADRAO,
@@ -27,6 +26,17 @@ import {
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, "");
+}
+
+// Cada login é a própria loja: storeId é o uid do usuário autenticado, nunca
+// um valor fixo compartilhado. Isso garante que um app baixado por outra
+// pessoa jamais enxergue clientes/OS's cadastrados por outro login — a
+// separação é reforçada pelas regras de segurança do Firestore (que
+// comparam storeId com request.auth.uid), não só por este filtro no cliente.
+function getStoreId(): string {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error("Usuário não autenticado.");
+  return uid;
 }
 
 // Mantém as marcas mais procuradas (Apple, Samsung, Motorola, Xiaomi...)
@@ -66,6 +76,7 @@ export async function searchCustomersByPhone(phone: string): Promise<Customer[]>
 
   const q = query(
     collection(db, "customers"),
+    where("storeId", "==", getStoreId()),
     where("telefoneBusca", ">=", digits),
     where("telefoneBusca", "<=", digits + ""),
     limit(10),
@@ -79,7 +90,7 @@ export async function createCustomer(
 ): Promise<Customer> {
   const payload = {
     ...data,
-    storeId: STORE_ID,
+    storeId: getStoreId(),
     telefoneBusca: onlyDigits(data.telefone),
     createdAt: Date.now(),
   };
@@ -89,7 +100,9 @@ export async function createCustomer(
 
 export async function getCustomer(id: string): Promise<Customer | null> {
   const snap = await getDoc(doc(db, "customers", id));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Customer) : null;
+  if (!snap.exists()) return null;
+  const customer = { id: snap.id, ...snap.data() } as Customer;
+  return customer.storeId === getStoreId() ? customer : null;
 }
 
 // Garante que todas as marcas/modelos do seed existam — cria as que
@@ -98,6 +111,7 @@ export async function getCustomer(id: string): Promise<Customer | null> {
 // buscado (evita ficar lendo a subcoleção de cada marca de novo).
 async function syncSeedBrands(catalog: Catalog): Promise<boolean> {
   let changed = false;
+  const storeId = getStoreId();
   const existingByName = new Map(catalog.brands.map((b) => [b.nome, b]));
 
   for (const seedBrand of SEED_BRANDS) {
@@ -105,13 +119,13 @@ async function syncSeedBrands(catalog: Catalog): Promise<boolean> {
 
     if (!brand) {
       const brandRef = await addDoc(collection(db, "brands"), {
-        storeId: STORE_ID,
+        storeId,
         nome: seedBrand.nome,
       });
       const batch = writeBatch(db);
       for (const model of seedBrand.models) {
         const modelRef = doc(collection(db, "brands", brandRef.id, "models"));
-        batch.set(modelRef, model);
+        batch.set(modelRef, { ...model, storeId });
       }
       await batch.commit();
       changed = true;
@@ -124,7 +138,7 @@ async function syncSeedBrands(catalog: Catalog): Promise<boolean> {
       const batch = writeBatch(db);
       for (const model of missingModels) {
         const modelRef = doc(collection(db, "brands", brand.id, "models"));
-        batch.set(modelRef, model);
+        batch.set(modelRef, { ...model, storeId });
       }
       await batch.commit();
       changed = true;
@@ -142,9 +156,10 @@ export interface Catalog {
 let catalogCache: Catalog | null = null;
 
 async function fetchCatalog(): Promise<Catalog> {
+  const storeId = getStoreId();
   const [brandsSnap, modelsSnap] = await Promise.all([
-    getDocs(query(collection(db, "brands"), where("storeId", "==", STORE_ID))),
-    getDocs(collectionGroup(db, "models")),
+    getDocs(query(collection(db, "brands"), where("storeId", "==", storeId))),
+    getDocs(query(collectionGroup(db, "models"), where("storeId", "==", storeId))),
   ]);
 
   const brands = sortBrands(brandsSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Brand));
@@ -180,11 +195,12 @@ export async function addCustomBrandModel(input: {
   hasTouchId: boolean;
   hasHomeButton: boolean;
 }): Promise<{ brandId: string; brandName: string; modelId: string; modelName: string }> {
+  const storeId = getStoreId();
   let brandId = input.brandId;
 
   if (!brandId) {
     const brandRef = await addDoc(collection(db, "brands"), {
-      storeId: STORE_ID,
+      storeId,
       nome: input.brandName,
     });
     brandId = brandRef.id;
@@ -196,6 +212,7 @@ export async function addCustomBrandModel(input: {
     hasFaceId: input.hasFaceId,
     hasTouchId: input.hasTouchId,
     hasHomeButton: input.hasHomeButton,
+    storeId,
   });
 
   catalogCache = null;
@@ -204,7 +221,7 @@ export async function addCustomBrandModel(input: {
 }
 
 async function getNextOsNumber(): Promise<number> {
-  const counterRef = doc(db, "counters", STORE_ID);
+  const counterRef = doc(db, "counters", getStoreId());
   return runTransaction(db, async (tx) => {
     const snap = await tx.get(counterRef);
     const current = snap.exists() ? (snap.data().value as number) : 0;
@@ -219,21 +236,28 @@ export async function createServiceOrder(
 ): Promise<ServiceOrder> {
   const number = await getNextOsNumber();
   const now = Date.now();
-  const payload = { ...data, storeId: STORE_ID, number, createdAt: now, updatedAt: now };
+  const payload = { ...data, storeId: getStoreId(), number, createdAt: now, updatedAt: now };
   const ref = await addDoc(collection(db, "serviceOrders"), payload);
   return { id: ref.id, ...payload };
 }
 
 export async function getRecentServiceOrders(count = 20): Promise<ServiceOrder[]> {
   const snap = await getDocs(
-    query(collection(db, "serviceOrders"), orderBy("createdAt", "desc"), limit(count)),
+    query(
+      collection(db, "serviceOrders"),
+      where("storeId", "==", getStoreId()),
+      orderBy("createdAt", "desc"),
+      limit(count),
+    ),
   );
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as ServiceOrder);
 }
 
 export async function getServiceOrder(id: string): Promise<ServiceOrder | null> {
   const snap = await getDoc(doc(db, "serviceOrders", id));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as ServiceOrder) : null;
+  if (!snap.exists()) return null;
+  const order = { id: snap.id, ...snap.data() } as ServiceOrder;
+  return order.storeId === getStoreId() ? order : null;
 }
 
 export async function updateServiceOrder(
@@ -250,13 +274,13 @@ const DEFAULT_STORE_SETTINGS: StoreSettings = {
 };
 
 export async function getStoreSettings(): Promise<StoreSettings> {
-  const snap = await getDoc(doc(db, "settings", STORE_ID));
+  const snap = await getDoc(doc(db, "settings", getStoreId()));
   return snap.exists() ? (snap.data() as StoreSettings) : DEFAULT_STORE_SETTINGS;
 }
 
 export async function updateStoreSettings(patch: Partial<StoreSettings>): Promise<void> {
   await setDoc(
-    doc(db, "settings", STORE_ID),
+    doc(db, "settings", getStoreId()),
     { ...patch, updatedAt: Date.now() },
     { merge: true },
   );

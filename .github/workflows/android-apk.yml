@@ -35,7 +35,6 @@ jobs:
           NEXT_PUBLIC_FIREBASE_APP_ID: "1:1099157468066:web:076975223826d75d54b8fb"
           NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: zagfyygf
           NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: os-tecnica
-          NEXT_PUBLIC_STORE_ID: default
 
       - name: Sync Capacitor (copia o build estático para o projeto Android)
         run: npx cap sync android

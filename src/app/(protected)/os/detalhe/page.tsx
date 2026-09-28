@@ -29,7 +29,9 @@ function OsDetailContent() {
 
   useEffect(() => {
     if (!id) return;
-    getServiceOrder(id).then(setOrder);
+    getServiceOrder(id)
+      .then(setOrder)
+      .catch(() => setOrder(null));
   }, [id]);
 
   if (!id || order === null) {

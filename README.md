@@ -146,8 +146,6 @@ NEXT_PUBLIC_FIREBASE_APP_ID=
 
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
 NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=
-
-NEXT_PUBLIC_STORE_ID=default
 ```
 
 Veja `.env.example`. Esses valores são públicos por design — a chave da Web do Firebase
@@ -160,7 +158,10 @@ tipo *unsigned*, feito pra ficar embutido em apps públicos.
 2. Ativar **Authentication → Sign-in method → E-mail/senha**.
 3. Ativar **Firestore Database** (modo produção).
 4. Publicar as regras de `firestore.rules` (Firestore Database → Regras).
-5. Em **Configurações do projeto → Seus apps**, criar um app Web e copiar a config pro
+5. Publicar os índices de `firestore.indexes.json` (Firestore Database → Índices) — ou
+   simplesmente usar o app: o Firestore mostra, no console do navegador, um link pronto
+   pra criar o índice que falta na primeira vez que cada consulta roda.
+6. Em **Configurações do projeto → Seus apps**, criar um app Web e copiar a config pro
    `.env.local`.
 
 ### Cloudinary
@@ -172,8 +173,11 @@ tipo *unsigned*, feito pra ficar embutido em apps públicos.
 
 ## Regras do Firestore (modo Nuvem)
 
-Acesso liberado para qualquer usuário autenticado (v1 single-tenant — uma loja só, sem
-papéis diferentes entre técnico/admin):
+Cada login é a própria loja: todo documento guarda um campo `storeId` igual ao uid do
+usuário autenticado, e as regras abaixo bloqueiam qualquer leitura/escrita fora do seu
+próprio `storeId` — ou seja, duas pessoas que baixam o app e criam contas diferentes
+nunca enxergam os dados uma da outra, mesmo estando no mesmo projeto Firebase. O arquivo
+`firestore.rules` (raiz do projeto) é a fonte da verdade; publique-o sempre que ele mudar:
 
 ```
 rules_version = '2';
@@ -181,26 +185,34 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /customers/{id} {
-      allow read, write: if request.auth != null;
+      allow read, update, delete: if request.auth != null && resource.data.storeId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.storeId == request.auth.uid;
     }
     match /brands/{id} {
-      allow read, write: if request.auth != null;
+      allow read, update, delete: if request.auth != null && resource.data.storeId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.storeId == request.auth.uid;
     }
     match /{path=**}/models/{modelId} {
-      allow read, write: if request.auth != null;
+      allow read, update, delete: if request.auth != null && resource.data.storeId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.storeId == request.auth.uid;
     }
     match /serviceOrders/{id} {
-      allow read, write: if request.auth != null;
+      allow read, update, delete: if request.auth != null && resource.data.storeId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.storeId == request.auth.uid;
     }
     match /counters/{id} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth != null && id == request.auth.uid;
     }
     match /settings/{id} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth != null && id == request.auth.uid;
     }
   }
 }
 ```
+
+Isso também vale, obrigatoriamente, para quem já tinha o app rodando antes dessa versão:
+publique as novas regras (e os novos índices, próximo passo) no projeto Firebase em uso,
+senão o app cloud para de funcionar (as regras antigas não filtravam por login nenhum).
 
 ## Distribuição automática (CI/CD)
 
@@ -220,6 +232,9 @@ download nunca mudam.
 
 - Fotos do aparelho sempre exigem internet (upload pro Cloudinary), mesmo no modo Local.
 - Trocar entre modo Local e Nuvem não migra os dados existentes.
+- Um login = uma loja: hoje não existe forma de dois logins (ex.: dono e funcionário)
+  compartilharem os mesmos clientes/OS's no modo Nuvem — cada conta só vê o que ela
+  mesma cadastrou.
 - O APK gerado é uma build **debug** (não assinada para produção/Play Store).
 - O instalador do Windows não é assinado digitalmente — o Windows Defender SmartScreen
   mostra um aviso na primeira execução (não tem como evitar sem comprar um certificado

@@ -27,28 +27,32 @@ function EditarOsContent() {
   useEffect(() => {
     if (!id) return;
     (async () => {
-      const loadedOrder = await getServiceOrder(id);
-      if (!loadedOrder) {
+      try {
+        const loadedOrder = await getServiceOrder(id);
+        if (!loadedOrder) {
+          setOrder(null);
+          return;
+        }
+
+        const [customer, catalog] = await Promise.all([
+          getCustomer(loadedOrder.customerId),
+          getCatalog(),
+        ]);
+
+        const model = catalog.modelsByBrand[loadedOrder.device.brandId]?.find(
+          (m) => m.id === loadedOrder.device.modelId,
+        );
+        const modelFlags = model
+          ? { hasFaceId: model.hasFaceId, hasTouchId: model.hasTouchId, hasHomeButton: model.hasHomeButton }
+          : { hasFaceId: false, hasTouchId: false, hasHomeButton: false };
+
+        const wizardState = orderToWizardState(loadedOrder, customer, modelFlags);
+        setOrder(loadedOrder);
+        setInitialState(wizardState);
+        setState(wizardState);
+      } catch {
         setOrder(null);
-        return;
       }
-
-      const [customer, catalog] = await Promise.all([
-        getCustomer(loadedOrder.customerId),
-        getCatalog(),
-      ]);
-
-      const model = catalog.modelsByBrand[loadedOrder.device.brandId]?.find(
-        (m) => m.id === loadedOrder.device.modelId,
-      );
-      const modelFlags = model
-        ? { hasFaceId: model.hasFaceId, hasTouchId: model.hasTouchId, hasHomeButton: model.hasHomeButton }
-        : { hasFaceId: false, hasTouchId: false, hasHomeButton: false };
-
-      const wizardState = orderToWizardState(loadedOrder, customer, modelFlags);
-      setOrder(loadedOrder);
-      setInitialState(wizardState);
-      setState(wizardState);
     })();
   }, [id]);
 
