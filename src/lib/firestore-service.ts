@@ -29,6 +29,20 @@ function onlyDigits(value: string) {
   return value.replace(/\D/g, "");
 }
 
+// Mantém as marcas mais procuradas (Apple, Samsung, Motorola, Xiaomi...)
+// no topo da lista, na mesma ordem do seed. Marcas cadastradas manualmente
+// (fora do seed) ficam depois, em ordem alfabética.
+const SEED_BRAND_ORDER = new Map(SEED_BRANDS.map((b, i) => [b.nome, i]));
+
+function sortBrands(brands: Brand[]): Brand[] {
+  return [...brands].sort((a, b) => {
+    const orderA = SEED_BRAND_ORDER.get(a.nome) ?? Number.MAX_SAFE_INTEGER;
+    const orderB = SEED_BRAND_ORDER.get(b.nome) ?? Number.MAX_SAFE_INTEGER;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.nome.localeCompare(b.nome);
+  });
+}
+
 export async function searchCustomersByPhone(phone: string): Promise<Customer[]> {
   const digits = onlyDigits(phone);
   if (digits.length < 4) return [];
@@ -111,9 +125,7 @@ async function fetchCatalog(): Promise<Catalog> {
     getDocs(collectionGroup(db, "models")),
   ]);
 
-  const brands = brandsSnap.docs
-    .map((d) => ({ id: d.id, ...d.data() }) as Brand)
-    .sort((a, b) => a.nome.localeCompare(b.nome));
+  const brands = sortBrands(brandsSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Brand));
 
   const modelsByBrand: Record<string, Model[]> = {};
   for (const d of modelsSnap.docs) {
