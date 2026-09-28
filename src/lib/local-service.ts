@@ -42,16 +42,41 @@ export async function createCustomerLocal(
   return customer;
 }
 
+interface CustomCatalogEntry {
+  brandName: string;
+  modelName: string;
+  hasFaceId: boolean;
+  hasTouchId: boolean;
+  hasHomeButton: boolean;
+}
+
+async function getCustomCatalogEntries(): Promise<CustomCatalogEntry[]> {
+  const db = await getLocalDb();
+  const record = (await db.get("meta", "customCatalog")) as
+    | { value: CustomCatalogEntry[] }
+    | undefined;
+  return record?.value ?? [];
+}
+
+async function saveCustomCatalogEntry(entry: CustomCatalogEntry): Promise<void> {
+  const current = await getCustomCatalogEntries();
+  const db = await getLocalDb();
+  await db.put("meta", { key: "customCatalog", value: [...current, entry] });
+}
+
 let catalogCache: Catalog | null = null;
 
 export async function getCatalogLocal(): Promise<Catalog> {
   if (catalogCache) return catalogCache;
 
+  const custom = await getCustomCatalogEntries();
   const brands: Catalog["brands"] = [];
   const modelsByBrand: Record<string, Model[]> = {};
+  const brandIdByName = new Map<string, string>();
 
   SEED_BRANDS.forEach((seedBrand, brandIndex) => {
     const brandId = `local-brand-${brandIndex}`;
+    brandIdByName.set(seedBrand.nome, brandId);
     brands.push({ id: brandId, storeId: STORE_ID, nome: seedBrand.nome });
     modelsByBrand[brandId] = seedBrand.models.map((model, modelIndex) => ({
       id: `local-model-${brandIndex}-${modelIndex}`,
@@ -59,8 +84,51 @@ export async function getCatalogLocal(): Promise<Catalog> {
     }));
   });
 
+  custom.forEach((entry, index) => {
+    let brandId = brandIdByName.get(entry.brandName);
+    if (!brandId) {
+      brandId = `custom-brand-${index}`;
+      brandIdByName.set(entry.brandName, brandId);
+      brands.push({ id: brandId, storeId: STORE_ID, nome: entry.brandName });
+      modelsByBrand[brandId] = [];
+    }
+    modelsByBrand[brandId].push({
+      id: `custom-model-${index}`,
+      nome: entry.modelName,
+      capacidades: [],
+      hasFaceId: entry.hasFaceId,
+      hasTouchId: entry.hasTouchId,
+      hasHomeButton: entry.hasHomeButton,
+    });
+  });
+
   catalogCache = { brands, modelsByBrand };
   return catalogCache;
+}
+
+export async function addCustomBrandModelLocal(input: {
+  brandId?: string;
+  brandName: string;
+  modelName: string;
+  hasFaceId: boolean;
+  hasTouchId: boolean;
+  hasHomeButton: boolean;
+}): Promise<{ brandId: string; brandName: string; modelId: string; modelName: string }> {
+  await saveCustomCatalogEntry({
+    brandName: input.brandName,
+    modelName: input.modelName,
+    hasFaceId: input.hasFaceId,
+    hasTouchId: input.hasTouchId,
+    hasHomeButton: input.hasHomeButton,
+  });
+  catalogCache = null;
+
+  const catalog = await getCatalogLocal();
+  const brand = catalog.brands.find((b) => b.nome === input.brandName)!;
+  const models = catalog.modelsByBrand[brand.id];
+  const model = models[models.length - 1];
+
+  return { brandId: brand.id, brandName: brand.nome, modelId: model.id, modelName: model.nome };
 }
 
 async function getNextOsNumberLocal(): Promise<number> {

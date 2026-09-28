@@ -24,6 +24,19 @@ export async function getCatalog(): Promise<Catalog> {
   return getBackendMode() === "local" ? local.getCatalogLocal() : cloud.getCatalog();
 }
 
+export async function addCustomBrandModel(input: {
+  brandId?: string;
+  brandName: string;
+  modelName: string;
+  hasFaceId: boolean;
+  hasTouchId: boolean;
+  hasHomeButton: boolean;
+}): Promise<{ brandId: string; brandName: string; modelId: string; modelName: string }> {
+  return getBackendMode() === "local"
+    ? local.addCustomBrandModelLocal(input)
+    : cloud.addCustomBrandModel(input);
+}
+
 export async function createServiceOrder(
   data: Omit<ServiceOrder, "id" | "storeId" | "number" | "createdAt" | "updatedAt">,
 ): Promise<ServiceOrder> {

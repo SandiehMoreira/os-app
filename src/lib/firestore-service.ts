@@ -56,19 +56,46 @@ export async function createCustomer(
   return { id: ref.id, ...payload };
 }
 
-async function seedBrands(): Promise<void> {
+// Garante que todas as marcas/modelos do seed existam — cria as que
+// faltam e completa modelos novos em marcas que já existiam, sem tocar
+// em nada que a loja tenha cadastrado manualmente. Reusa o catálogo já
+// buscado (evita ficar lendo a subcoleção de cada marca de novo).
+async function syncSeedBrands(catalog: Catalog): Promise<boolean> {
+  let changed = false;
+  const existingByName = new Map(catalog.brands.map((b) => [b.nome, b]));
+
   for (const seedBrand of SEED_BRANDS) {
-    const brandRef = await addDoc(collection(db, "brands"), {
-      storeId: STORE_ID,
-      nome: seedBrand.nome,
-    });
-    const batch = writeBatch(db);
-    for (const model of seedBrand.models) {
-      const modelRef = doc(collection(db, "brands", brandRef.id, "models"));
-      batch.set(modelRef, model);
+    const brand = existingByName.get(seedBrand.nome);
+
+    if (!brand) {
+      const brandRef = await addDoc(collection(db, "brands"), {
+        storeId: STORE_ID,
+        nome: seedBrand.nome,
+      });
+      const batch = writeBatch(db);
+      for (const model of seedBrand.models) {
+        const modelRef = doc(collection(db, "brands", brandRef.id, "models"));
+        batch.set(modelRef, model);
+      }
+      await batch.commit();
+      changed = true;
+      continue;
     }
-    await batch.commit();
+
+    const existingModelNames = new Set((catalog.modelsByBrand[brand.id] ?? []).map((m) => m.nome));
+    const missingModels = seedBrand.models.filter((m) => !existingModelNames.has(m.nome));
+    if (missingModels.length > 0) {
+      const batch = writeBatch(db);
+      for (const model of missingModels) {
+        const modelRef = doc(collection(db, "brands", brand.id, "models"));
+        batch.set(modelRef, model);
+      }
+      await batch.commit();
+      changed = true;
+    }
   }
+
+  return changed;
 }
 
 export interface Catalog {
@@ -103,14 +130,42 @@ async function fetchCatalog(): Promise<Catalog> {
 export async function getCatalog(): Promise<Catalog> {
   if (catalogCache) return catalogCache;
 
-  let catalog = await fetchCatalog();
-  if (catalog.brands.length === 0) {
-    await seedBrands();
-    catalog = await fetchCatalog();
+  const catalog = await fetchCatalog();
+  const changed = await syncSeedBrands(catalog);
+
+  catalogCache = changed ? await fetchCatalog() : catalog;
+  return catalogCache;
+}
+
+export async function addCustomBrandModel(input: {
+  brandId?: string;
+  brandName: string;
+  modelName: string;
+  hasFaceId: boolean;
+  hasTouchId: boolean;
+  hasHomeButton: boolean;
+}): Promise<{ brandId: string; brandName: string; modelId: string; modelName: string }> {
+  let brandId = input.brandId;
+
+  if (!brandId) {
+    const brandRef = await addDoc(collection(db, "brands"), {
+      storeId: STORE_ID,
+      nome: input.brandName,
+    });
+    brandId = brandRef.id;
   }
 
-  catalogCache = catalog;
-  return catalog;
+  const modelRef = await addDoc(collection(db, "brands", brandId, "models"), {
+    nome: input.modelName,
+    capacidades: [],
+    hasFaceId: input.hasFaceId,
+    hasTouchId: input.hasTouchId,
+    hasHomeButton: input.hasHomeButton,
+  });
+
+  catalogCache = null;
+
+  return { brandId, brandName: input.brandName, modelId: modelRef.id, modelName: input.modelName };
 }
 
 async function getNextOsNumber(): Promise<number> {
