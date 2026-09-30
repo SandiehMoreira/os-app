@@ -158,10 +158,7 @@ tipo *unsigned*, feito pra ficar embutido em apps públicos.
 2. Ativar **Authentication → Sign-in method → E-mail/senha**.
 3. Ativar **Firestore Database** (modo produção).
 4. Publicar as regras de `firestore.rules` (Firestore Database → Regras).
-5. Publicar os índices de `firestore.indexes.json` (Firestore Database → Índices) — ou
-   simplesmente usar o app: o Firestore mostra, no console do navegador, um link pronto
-   pra criar o índice que falta na primeira vez que cada consulta roda.
-6. Em **Configurações do projeto → Seus apps**, criar um app Web e copiar a config pro
+5. Em **Configurações do projeto → Seus apps**, criar um app Web e copiar a config pro
    `.env.local`.
 
 ### Cloudinary
@@ -173,46 +170,34 @@ tipo *unsigned*, feito pra ficar embutido em apps públicos.
 
 ## Regras do Firestore (modo Nuvem)
 
-Cada login é a própria loja: todo documento guarda um campo `storeId` igual ao uid do
-usuário autenticado, e as regras abaixo bloqueiam qualquer leitura/escrita fora do seu
-próprio `storeId` — ou seja, duas pessoas que baixam o app e criam contas diferentes
-nunca enxergam os dados uma da outra, mesmo estando no mesmo projeto Firebase. O arquivo
-`firestore.rules` (raiz do projeto) é a fonte da verdade; publique-o sempre que ele mudar:
+Cada login é a própria loja: todo dado mora debaixo de `stores/{uid}/...` (clientes, OS's,
+catálogo customizado, contador, configurações), então o isolamento vem do próprio caminho
+do documento, não de um campo que precisa ser filtrado em cada consulta — duas pessoas que
+baixam o app e criam contas diferentes nunca enxergam os dados uma da outra, mesmo estando
+no mesmo projeto Firebase. O arquivo `firestore.rules` (raiz do projeto) é a fonte da
+verdade; publique-o sempre que ele mudar (Firestore Database → Regras → colar → Publicar):
 
 ```
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /customers/{id} {
-      allow read, update, delete: if request.auth != null && resource.data.storeId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.storeId == request.auth.uid;
-    }
-    match /brands/{id} {
-      allow read, update, delete: if request.auth != null && resource.data.storeId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.storeId == request.auth.uid;
-    }
-    match /{path=**}/models/{modelId} {
-      allow read, update, delete: if request.auth != null && resource.data.storeId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.storeId == request.auth.uid;
-    }
-    match /serviceOrders/{id} {
-      allow read, update, delete: if request.auth != null && resource.data.storeId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.storeId == request.auth.uid;
-    }
-    match /counters/{id} {
-      allow read, write: if request.auth != null && id == request.auth.uid;
-    }
-    match /settings/{id} {
-      allow read, write: if request.auth != null && id == request.auth.uid;
+    match /stores/{storeId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == storeId;
     }
   }
 }
 ```
 
+Não precisa criar nenhum índice composto — como cada consulta já roda dentro da
+subcoleção da própria loja, não sobra nenhum filtro de igualdade + intervalo/ordenação
+que exija índice.
+
 Isso também vale, obrigatoriamente, para quem já tinha o app rodando antes dessa versão:
-publique as novas regras (e os novos índices, próximo passo) no projeto Firebase em uso,
-senão o app cloud para de funcionar (as regras antigas não filtravam por login nenhum).
+publique a regra acima no projeto Firebase em uso, senão o app cloud não salva nem lista
+nada (o caminho `stores/{uid}/...` é novo — regras antigas não cobrem ele, e por padrão o
+Firestore nega qualquer caminho sem regra correspondente). O catálogo de marca/modelo
+funciona independente disso, pois já vem embutido no app.
 
 ## Distribuição automática (CI/CD)
 
