@@ -12,20 +12,42 @@ function formatDate(ms?: number) {
 
 export default function OsListPage() {
   const [orders, setOrders] = useState<ServiceOrder[] | null>(null);
+  const [error, setError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    getRecentServiceOrders(30).then(setOrders);
-  }, []);
+    getRecentServiceOrders(30)
+      .then(setOrders)
+      .catch(() => setError(true));
+  }, [reloadKey]);
+
+  function tentarNovamente() {
+    setError(false);
+    setReloadKey((k) => k + 1);
+  }
 
   return (
     <div className="flex flex-1 flex-col p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+28px)]">
       <h1 className="mb-4 text-lg font-semibold">OS geradas</h1>
 
-      {orders === null && (
+      {error && (
+        <div className="space-y-2">
+          <p className="text-sm text-red-600">Não foi possível carregar as OS&apos;s. Confere sua conexão.</p>
+          <button
+            type="button"
+            onClick={tentarNovamente}
+            className="text-sm font-medium text-blue-600 underline"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
+      {!error && orders === null && (
         <p className="text-sm text-black/50 dark:text-white/50">Carregando...</p>
       )}
 
-      {orders !== null && orders.length === 0 && (
+      {!error && orders !== null && orders.length === 0 && (
         <p className="text-sm text-black/50 dark:text-white/50">Nenhuma OS gerada ainda.</p>
       )}
 

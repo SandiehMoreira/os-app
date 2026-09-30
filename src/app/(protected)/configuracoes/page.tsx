@@ -113,12 +113,16 @@ function EmpresaSection() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getStoreSettings().then((settings) => {
-      setNomeEmpresa(settings.nomeEmpresa);
-      setLogoUrl(settings.logoUrl);
-      setTermo(settings.termoResponsabilidade);
-      setLoading(false);
-    });
+    getStoreSettings()
+      .then((settings) => {
+        setNomeEmpresa(settings.nomeEmpresa);
+        setLogoUrl(settings.logoUrl);
+        setTermo(settings.termoResponsabilidade);
+      })
+      .catch(() => {
+        setError("Não foi possível carregar as configurações salvas. Confere sua conexão.");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   async function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {

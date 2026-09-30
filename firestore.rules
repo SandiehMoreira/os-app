@@ -2,38 +2,13 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Cada login é a própria loja: storeId em cada documento é o uid do
-    // usuário autenticado. Isso garante que um app baixado por outra pessoa
-    // nunca leia ou escreva dados cadastrados por outro login — mesmo que
-    // o cliente tente burlar os filtros da tela, a regra abaixo bloqueia.
-    match /customers/{id} {
-      allow read, update, delete: if request.auth != null && resource.data.storeId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.storeId == request.auth.uid;
-    }
-
-    match /brands/{id} {
-      allow read, update, delete: if request.auth != null && resource.data.storeId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.storeId == request.auth.uid;
-    }
-    // Regra recursiva (não aninhada) para permitir a collectionGroup query
-    // "models" usada no carregamento rápido do catálogo marca/modelo. Cada
-    // documento de modelo também guarda seu próprio storeId (não só o
-    // documento pai da marca), pois uma consulta de collectionGroup só pode
-    // ser validada pelas regras quando o campo comparado está no próprio
-    // documento buscado.
-    match /{path=**}/models/{modelId} {
-      allow read, update, delete: if request.auth != null && resource.data.storeId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.storeId == request.auth.uid;
-    }
-    match /serviceOrders/{id} {
-      allow read, update, delete: if request.auth != null && resource.data.storeId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.storeId == request.auth.uid;
-    }
-    match /counters/{id} {
-      allow read, write: if request.auth != null && id == request.auth.uid;
-    }
-    match /settings/{id} {
-      allow read, write: if request.auth != null && id == request.auth.uid;
+    // Cada login é a própria loja: todo dado mora debaixo de
+    // stores/{uid}/... e só o dono desse uid pode ler ou escrever ali —
+    // isso é verdade pra qualquer sub-coleção nova que vier a existir no
+    // futuro (customers, serviceOrders, meta/...), sem precisar mexer
+    // nesta regra de novo.
+    match /stores/{storeId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == storeId;
     }
   }
 }

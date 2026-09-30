@@ -12,10 +12,19 @@ function formatDate(ms?: number) {
 
 export default function DashboardPage() {
   const [recent, setRecent] = useState<ServiceOrder[] | null>(null);
+  const [error, setError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    getRecentServiceOrders(5).then(setRecent);
-  }, []);
+    getRecentServiceOrders(5)
+      .then(setRecent)
+      .catch(() => setError(true));
+  }, [reloadKey]);
+
+  function tentarNovamente() {
+    setError(false);
+    setReloadKey((k) => k + 1);
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+28px)]">
@@ -38,11 +47,26 @@ export default function DashboardPage() {
           Últimas geradas
         </p>
 
-        {recent === null && (
+        {error && (
+          <div className="space-y-2">
+            <p className="text-sm text-red-600">
+              Não foi possível carregar as últimas OS&apos;s. Confere sua conexão.
+            </p>
+            <button
+              type="button"
+              onClick={tentarNovamente}
+              className="text-sm font-medium text-blue-600 underline"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
+        {!error && recent === null && (
           <p className="text-sm text-black/50 dark:text-white/50">Carregando...</p>
         )}
 
-        {recent !== null && recent.length === 0 && (
+        {!error && recent !== null && recent.length === 0 && (
           <p className="text-sm text-black/50 dark:text-white/50">Nenhuma OS gerada ainda.</p>
         )}
 

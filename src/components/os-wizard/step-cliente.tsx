@@ -54,6 +54,8 @@ export function StepCliente({ state, update, onNext, onBack }: StepProps) {
       try {
         const found = await searchCustomersByPhone(state.customerTelefone);
         setResults(found);
+      } catch {
+        setResults([]);
       } finally {
         setSearching(false);
       }
