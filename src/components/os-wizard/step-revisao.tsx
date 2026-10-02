@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { createCustomer, createServiceOrder, updateServiceOrder } from "@/lib/data-service";
 import { OS_STATUS_LABELS, type OsStatus, type ServiceOrder } from "@/types/os";
 import type { StepProps } from "./types";
+import { formatBRL } from "@/lib/format";
 
 interface StepRevisaoProps extends StepProps {
   existingOrder?: ServiceOrder;
@@ -215,22 +216,21 @@ export function StepRevisao({ state, onBack, existingOrder }: StepRevisaoProps) 
           {state.servicos.map((s, i) => (
             <p key={i} className="flex justify-between">
               <span>{s.descricao || "-"}</span>
-              <span>R$ {(Number(s.valor) || 0).toFixed(2)}</span>
+              <span>{formatBRL(Number(s.valor) || 0)}</span>
             </p>
           ))}
           {state.servicos.length > 0 && (
             <p className="flex justify-between font-semibold">
               <span>Total</span>
               <span>
-                R${" "}
-                {state.servicos
-                  .reduce((sum, s) => sum + (Number(s.valor) || 0), 0)
-                  .toFixed(2)}
+                {formatBRL(state.servicos.reduce((sum, s) => sum + (Number(s.valor) || 0), 0))}
               </span>
             </p>
           )}
           <p className="text-black/60 dark:text-white/60">
-            {state.prazoEntrega || "Sem prazo definido"}
+            {state.prazoEntrega
+              ? `Prazo estimado: ${state.prazoEntrega.split("-").reverse().join("/")}`
+              : "Sem prazo definido"}
           </p>
         </ResumoSecao>
 

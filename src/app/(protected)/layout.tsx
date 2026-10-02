@@ -32,7 +32,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-black/10 px-4 py-3 dark:border-white/10">
-        <span className="font-semibold">OS Assistência Técnica</span>
+        <span className="font-semibold">OS-App</span>
         {isOsDetail ? (
           <button
             onClick={() => router.push("/")}

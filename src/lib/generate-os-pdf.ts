@@ -6,6 +6,7 @@ import {
   OS_STATUS_LABELS,
   type ServiceOrder,
 } from "@/types/os";
+import { formatBRL } from "@/lib/format";
 
 const PAGE_WIDTH = 210;
 const MARGIN = 15;
@@ -153,7 +154,7 @@ export async function generateOsPdf(order: ServiceOrder): Promise<jsPDF> {
   } else {
     for (const s of servicos) {
       doc.text(s.descricao, MARGIN + 3, y);
-      doc.text(`R$ ${s.valor.toFixed(2)}`, PAGE_WIDTH - MARGIN - 3, y, { align: "right" });
+      doc.text(formatBRL(s.valor), PAGE_WIDTH - MARGIN - 3, y, { align: "right" });
       y += 5.5;
     }
   }
@@ -161,7 +162,7 @@ export async function generateOsPdf(order: ServiceOrder): Promise<jsPDF> {
   doc.setFontSize(12);
   doc.text("Total", MARGIN + 3, y + 2);
   doc.text(
-    `R$ ${(order.orcamento.valorOrcado ?? 0).toFixed(2)}`,
+    formatBRL(order.orcamento.valorOrcado ?? 0),
     PAGE_WIDTH - MARGIN - 3,
     y + 2,
     { align: "right" },

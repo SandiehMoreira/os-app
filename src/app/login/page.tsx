@@ -40,7 +40,7 @@ export default function LoginPage() {
         className="w-full max-w-sm space-y-4 rounded-2xl border border-black/10 p-6 dark:border-white/10"
       >
         <div className="space-y-1 text-center">
-          <h1 className="text-xl font-semibold">OS Assistência Técnica</h1>
+          <h1 className="text-xl font-semibold">OS-App</h1>
           <p className="text-sm text-black/60 dark:text-white/60">
             Entre com seu e-mail e senha
           </p>

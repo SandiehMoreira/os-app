@@ -4,8 +4,8 @@ export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "OS Assistência Técnica",
-    short_name: "OS Técnica",
+    name: "OS-App · Ordens de Serviço",
+    short_name: "OS-App",
     description: "Abertura e acompanhamento de Ordens de Serviço da assistência técnica.",
     start_url: "/",
     display: "standalone",

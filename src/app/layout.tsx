@@ -25,12 +25,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OS Assistência Técnica",
+  title: "OS-App",
   description: "Abertura e acompanhamento de Ordens de Serviço da assistência técnica.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "OS Técnica",
+    title: "OS-App",
   },
   icons: {
     icon: [

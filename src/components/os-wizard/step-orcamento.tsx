@@ -2,6 +2,7 @@
 
 import type { StepProps } from "./types";
 import { WizardFooter } from "./wizard-footer";
+import { formatBRL } from "@/lib/format";
 
 export function StepOrcamento({ state, update, onNext, onBack }: StepProps) {
   function addServico() {
@@ -72,7 +73,7 @@ export function StepOrcamento({ state, update, onNext, onBack }: StepProps) {
           {state.servicos.length > 0 && (
             <div className="flex items-center justify-between rounded-lg bg-blue-600/10 px-3 py-2.5 text-sm font-semibold">
               <span>Valor total estimado</span>
-              <span>R$ {total.toFixed(2)}</span>
+              <span>{formatBRL(total)}</span>
             </div>
           )}
         </div>

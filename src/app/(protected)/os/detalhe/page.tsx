@@ -12,6 +12,7 @@ import {
   OS_STATUS_LABELS,
   type ServiceOrder,
 } from "@/types/os";
+import { formatBRL } from "@/lib/format";
 
 const CHECKLIST_LABELS: Record<string, string> = Object.fromEntries(
   [...CHECKLIST_ITEMS, ...CHECKLIST_ITEMS_CONDICIONAIS].map((item) => [item.key, item.label]),
@@ -154,18 +155,18 @@ function OsDetailContent() {
 
       <Secao titulo="Serviços e orçamento">
         {(!order.orcamento.servicos || order.orcamento.servicos.length === 0) && (
-          <p>{order.orcamento.valorOrcado != null ? `R$ ${order.orcamento.valorOrcado.toFixed(2)}` : "A definir"}</p>
+          <p>{order.orcamento.valorOrcado != null ? formatBRL(order.orcamento.valorOrcado) : "A definir"}</p>
         )}
         {order.orcamento.servicos?.map((s, i) => (
           <p key={i} className="flex justify-between">
             <span>{s.descricao}</span>
-            <span>R$ {s.valor.toFixed(2)}</span>
+            <span>{formatBRL(s.valor)}</span>
           </p>
         ))}
         {order.orcamento.servicos && order.orcamento.servicos.length > 0 && (
           <p className="flex justify-between font-semibold">
             <span>Total</span>
-            <span>R$ {order.orcamento.valorOrcado?.toFixed(2)}</span>
+            <span>{formatBRL(order.orcamento.valorOrcado ?? 0)}</span>
           </p>
         )}
       </Secao>
