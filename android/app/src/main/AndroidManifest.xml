@@ -33,6 +33,14 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
+
+        <!-- App ID de TESTE oficial do Google (não gera cobrança nem conta
+             como tráfego inválido). Trocar pelo App ID real assim que a
+             conta AdMob for criada e o app for registrado lá (ver README) —
+             junto com o ad unit ID em src/lib/admob.ts. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
     </application>
 
     <!-- Permissions -->

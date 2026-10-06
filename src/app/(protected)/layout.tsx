@@ -3,9 +3,12 @@
 import { signOut } from "firebase/auth";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Capacitor } from "@capacitor/core";
 import { useEffect } from "react";
+import { showBannerAd } from "@/lib/admob";
 import { useAuth } from "@/lib/auth-context";
 import { auth } from "@/lib/firebase";
+import { isPremium } from "@/lib/premium";
 
 const OS_DETAIL_PATH = /^\/os\/detalhe\/?$/;
 
@@ -14,12 +17,19 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const isOsDetail = OS_DETAIL_PATH.test(pathname);
+  const showingAd = Capacitor.isNativePlatform() && !isPremium();
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
     }
   }, [loading, user, router]);
+
+  useEffect(() => {
+    if (!loading && user && showingAd) {
+      showBannerAd();
+    }
+  }, [loading, user, showingAd]);
 
   if (loading || !user) {
     return (
@@ -57,7 +67,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
           </div>
         )}
       </header>
-      <main className="flex flex-1 flex-col">{children}</main>
+      <main className={`flex flex-1 flex-col ${showingAd ? "pb-[50px]" : ""}`}>{children}</main>
     </div>
   );
 }
