@@ -1,12 +1,13 @@
 import { AdMob, BannerAdPosition, BannerAdSize } from "@capacitor-community/admob";
 import { Capacitor } from "@capacitor/core";
 
-// App ID real já configurado no AndroidManifest.xml (app "OS Tecnica" no
-// AdMob). O ad unit ID do banner abaixo ainda é o de TESTE oficial do
-// Google — trocar pelo real assim que o bloco de anúncio "Banner" for
-// criado no AdMob, e então mudar USING_TEST_ADS para false.
-const BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111";
-const USING_TEST_ADS = true;
+// App ID e ad unit ID reais do AdMob (app "OS Tecnica", bloco "Banner
+// principal"). Blocos de anúncio novos podem levar até 1h pra começar a
+// exibir, e o app pode ficar com veiculação limitada por alguns dias até
+// o Google concluir a revisão — nesse meio tempo é normal o banner não
+// aparecer sempre.
+const BANNER_AD_UNIT_ID = "ca-app-pub-5673222320409126/3412910553";
+const USING_TEST_ADS = false;
 
 let initialized = false;
 
