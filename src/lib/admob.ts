@@ -1,11 +1,10 @@
 import { AdMob, BannerAdPosition, BannerAdSize } from "@capacitor-community/admob";
 import { Capacitor } from "@capacitor/core";
 
-// IDs de teste OFICIAIS do Google — qualquer um pode usar, sem precisar de
-// conta no AdMob, e nunca geram cobrança/clique inválido. Trocar pelos IDs
-// reais assim que a conta AdMob for criada e o app for registrado lá (ver
-// README) — junto com o `android:value` do AndroidManifest.xml e o
-// `isTesting`/`initializeForTesting` abaixo.
+// App ID real já configurado no AndroidManifest.xml (app "OS Tecnica" no
+// AdMob). O ad unit ID do banner abaixo ainda é o de TESTE oficial do
+// Google — trocar pelo real assim que o bloco de anúncio "Banner" for
+// criado no AdMob, e então mudar USING_TEST_ADS para false.
 const BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111";
 const USING_TEST_ADS = true;
 

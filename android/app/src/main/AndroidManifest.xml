@@ -34,13 +34,12 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- App ID de TESTE oficial do Google (não gera cobrança nem conta
-             como tráfego inválido). Trocar pelo App ID real assim que a
-             conta AdMob for criada e o app for registrado lá (ver README) —
-             junto com o ad unit ID em src/lib/admob.ts. -->
+        <!-- App ID real do AdMob (app "OS Tecnica"). O ad unit ID do banner
+             em src/lib/admob.ts ainda está com o ID de teste, até o bloco
+             de anúncio ser criado no AdMob. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-5673222320409126~2187458790" />
     </application>
 
     <!-- Permissions -->
